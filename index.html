@@ -1502,11 +1502,15 @@ function vPaint(){
   const a=$('swAuto'),s=$('swSpeak');
   if(a)a.classList.toggle('on',!!voice.auto);
   if(s)s.classList.toggle('on',!!voice.speak);
-  const bar=$('vBar');if(bar)bar.classList.toggle('on',vOn);
-  $('vIco').textContent=vOn?'🔴':'🎤';
-  $('vTxt').textContent=vOn?(vCmd?'Слушаю команды…':'Говори, я слушаю…'):(vNative?'Голос: микрофон (native)':'Голос: нажми микрофон и говори');
-  $('vWave').style.display=vOn?'flex':'none';
-  $('micBtn').classList.toggle('rec',vOn);
+  const live=!!voice.live;
+  const bar=$('vBar');if(bar)bar.classList.toggle('on',vOn||live);
+  $('vIco').textContent=live?(vLiveHold?'🤖':'🔴'):(vOn?'🔴':'🎤');
+  $('vTxt').textContent=live?(vLiveHold?'Думаю и отвечаю…':'Живой диалог — слушаю постоянно…'):
+    (vOn?(vCmd?'Слушаю команды…':'Говори, я слушаю…'):(vNative?'Голос: микрофон (native)':'Голос: нажми микрофон и говори'));
+  $('vWave').style.display=(vOn||live)?'flex':'none';
+  $('micBtn').classList.toggle('rec',vOn||live);
+  const lb=$('vLiveBtn');
+  if(lb){lb.textContent=live?'⏹ Стоп':'🔁 Диалог';lb.classList.toggle('pri',live);lb.classList.toggle('ghost',!live);}
   $('vcDot').className='dot '+(voice.cmd?'on':'');
   $('vcMeta').textContent=voice.cmd?'слушаю команды':'выключены';
   $('vcBadge').textContent=voice.cmd?'mic':'—';
