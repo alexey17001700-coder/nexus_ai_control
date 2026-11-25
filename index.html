@@ -1209,10 +1209,18 @@ async function doVibrate(){
 }
 function doSpeak(t){
   t=String(t||'').replace(/[*`#_>]/g,'').slice(0,600);
-  if(!t)return;
+  if(!t)return Promise.resolve();
   const n=(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.TextToSpeech)||null;
-  if(n){try{n.speak({text:t,lang:'ru-RU',rate:1.0,category:'playback'}).catch(()=>{});return;}catch(e){}}
-  try{const u=new SpeechSynthesisUtterance(t);u.lang='ru-RU';u.rate=1.05;speechSynthesis.speak(u);}catch(e){}
+  if(n){try{return Promise.resolve(n.speak({text:t,lang:'ru-RU',rate:1.0,category:'playback'})).catch(()=>{});}catch(e){}}
+  return new Promise(res=>{
+    let done=false;const fin=()=>{if(!done){done=true;res();}};
+    try{
+      const u=new SpeechSynthesisUtterance(t);u.lang='ru-RU';u.rate=1.05;
+      u.onend=fin;u.onerror=fin;
+      speechSynthesis.speak(u);
+      setTimeout(fin,2500+t.length*130);
+    }catch(e){fin();}
+  });
 }
 async function doClip(t){
   const p=NN();
