@@ -61,7 +61,16 @@ jobs:
               'android.permission.FOREGROUND_SERVICE',
               'android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION',
               'android.permission.SYSTEM_ALERT_WINDOW',
+              'android.permission.RECORD_AUDIO',
           ]
+          queries = (
+              '    <queries>\n'
+              '        <intent><action android:name="android.speech.RecognitionService"/></intent>\n'
+              '        <intent><action android:name="android.intent.action.TTS_SERVICE"/></intent>\n'
+              '    </queries>\n'
+          )
+          if '<queries>' not in s:
+              s = s.replace('<application', queries + '    <application', 1)
           add = ''.join('    <uses-permission android:name="%s"/>\n' % x for x in perms if x not in s)
           s = s.replace('<application', add + '    <application', 1)
           svc = (
