@@ -891,12 +891,12 @@ function renderMsgs(){
   const m=document.querySelector('main');m.scrollTop=m.scrollHeight;
 }
 
-async function send(){
-  const inp=$('input'), text=inp.value.trim();
-  if(!text)return;
+async function send(textArg){
+  const inp=$('input'), text=(textArg!=null?String(textArg):inp.value).trim();
+  if(!text)return '';
   const p=providers.find(x=>x.id===activeId);
-  if(!p)return toast('Выбери ИИ');
-  inp.value='';
+  if(!p){toast('Выбери ИИ');return '';}
+  if(textArg==null)inp.value='';
   chats[activeId]=chats[activeId]||[];
   chats[activeId].push({role:'user',content:text});
   save();renderMsgs();
