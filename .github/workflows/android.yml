@@ -43,16 +43,43 @@ jobs:
       - name: Внедрить нативный модуль NexusNative
         run: |
           D=android/app/src/main/java/com/nexus/aicontrol
-          mkdir -p "$D"
+          mkdir -p "$D" android/app/src/main/res/xml
           cp native/android/NexusNativePlugin.java.txt "$D/NexusNativePlugin.java"
           cp native/android/ScreenPlugin.java.txt "$D/ScreenPlugin.java"
           cp native/android/ScreenCaptureService.java.txt "$D/ScreenCaptureService.java"
+          cp native/android/NexusControlPlugin.java.txt "$D/NexusControlPlugin.java"
+          cp native/android/NexusAccessibilityService.java.txt "$D/NexusAccessibilityService.java"
           cp native/android/MainActivity.java.txt "$D/MainActivity.java"
-          M=android/app/src/main/AndroidManifest.xml
-          sed -i 's|<application|<uses-permission android:name="android.permission.FLASHLIGHT"/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>\n    <application|' "$M"
-          sed -i 's|</application>|<service android:name=".ScreenCaptureService" android:foregroundServiceType="mediaProjection" android:exported="false"/>\n    </application>|' "$M"
-          echo "--- манифест ---"
-          grep -n "uses-permission\|ScreenCaptureService" "$M" || true
+          cp native/android/nexus_accessibility.xml.txt android/app/src/main/res/xml/nexus_accessibility.xml
+          python3 - <<'PY'
+          p = 'android/app/src/main/AndroidManifest.xml'
+          s = open(p).read()
+          perms = [
+              'android.permission.FLASHLIGHT',
+              'android.permission.POST_NOTIFICATIONS',
+              'android.permission.MODIFY_AUDIO_SETTINGS',
+              'android.permission.FOREGROUND_SERVICE',
+              'android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION',
+              'android.permission.SYSTEM_ALERT_WINDOW',
+          ]
+          add = ''.join('    <uses-permission android:name="%s"/>\n' % x for x in perms if x not in s)
+          s = s.replace('<application', add + '    <application', 1)
+          svc = (
+              '    <service android:name=".ScreenCaptureService" '
+              'android:foregroundServiceType="mediaProjection" android:exported="false"/>\n'
+              '    <service android:name=".NexusAccessibilityService" android:exported="true" '
+              'android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">\n'
+              '        <intent-filter>\n'
+              '            <action android:name="android.accessibilityservice.AccessibilityService"/>\n'
+              '        </intent-filter>\n'
+              '        <meta-data android:name="android.accessibilityservice" '
+              'android:resource="@xml/nexus_accessibility"/>\n'
+              '    </service>\n'
+          )
+          s = s.replace('</application>', svc + '</application>', 1)
+          open(p, 'w').write(s)
+          print(s)
+          PY
           echo "--- java ---"
           ls -la "$D"
 
