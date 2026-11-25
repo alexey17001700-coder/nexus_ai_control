@@ -561,7 +561,8 @@ details .body li{margin-bottom:4px}
 </main>
 
 <div class="composer" id="composer" style="display:none">
-  <textarea id="input" rows="1" placeholder="Сообщение..."></textarea>
+  <button class="mic" id="micBtn" onclick="voiceToggle()" title="Голос">🎤</button>
+  <textarea id="input" rows="1" placeholder="Сообщение или скажи голосом..."></textarea>
   <button class="send" id="sendBtn" onclick="send()">➤</button>
 </div>
 
