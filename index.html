@@ -621,7 +621,55 @@ function go(v){
   if(v==='phone')renderCmds();
   if(v==='screen')scRender();
   if(v==='bridge')brRender();
+  if(v==='guide')demoPlay(); else demoPause();
 }
+
+/* ================= ГИД (видео-инструкция) ================= */
+const DEMO=[
+  {t:'1. Установка приложения',d:'Скачай APK из вкладки Actions → Artifacts, установи и открой. Появится иконка как у обычной программы.'},
+  {t:'2. Добавить ИИ',d:'Вкладка «ИИ» → «+ Добавить ИИ». Вставь Base URL, модель и ключ. Кнопка «Проверить» зажжёт зелёную точку.'},
+  {t:'3. Общаться в чате',d:'Вкладка «Чат»: переключай ИИ чипсами сверху и пиши. История у каждого ИИ своя.'},
+  {t:'4. Управлять телефоном',d:'Вкладка «Телефон»: фонарик, вибрация, громкость, батарея, буфер, звонок, карты, камера.'},
+  {t:'5. Видеть и трогать экран',d:'Вкладка «Экран»: «Запустить» → разреши запись. Тап по картинке — реальное нажатие на телефоне.'},
+  {t:'6. Мост к Штабу',d:'Вкладка «Мост»: вставь URL канала и нажми «Подключить». Я смогу слать команды на твой телефон.'}
+];
+const DEMO_MS=4200;
+let demoI=0, demoT=null, demoOn=false;
+function demoShow(i){
+  demoI=((i%DEMO.length)+DEMO.length)%DEMO.length;
+  document.querySelectorAll('#demoScreen .scene').forEach(s=>{
+    const on=Number(s.dataset.i)===demoI;
+    s.classList.remove('on');
+    if(on){void s.offsetWidth;s.classList.add('on');}
+  });
+  $('demoT').textContent=DEMO[demoI].t;
+  $('demoD').textContent=DEMO[demoI].d;
+  $('demoDots').innerHTML=DEMO.map((_,k)=>'<span class="demo-dot '+(k===demoI?'on':'')+'" onclick="demoShow('+k+');demoRestart()"></span>').join('');
+  const f=$('demoFill');
+  f.style.transition='none';f.style.width='0%';
+  void f.offsetWidth;
+  if(demoOn){f.style.transition='width '+DEMO_MS+'ms linear';f.style.width='100%';}
+}
+function demoRestart(){
+  clearInterval(demoT);
+  if(demoOn)demoT=setInterval(()=>demoShow(demoI+1),DEMO_MS);
+}
+function demoPlay(){
+  if(demoOn)return;
+  demoOn=true;$('demoBtn').textContent='Пауза';
+  demoShow(demoI);
+  clearInterval(demoT);demoT=setInterval(()=>demoShow(demoI+1),DEMO_MS);
+}
+function demoPause(){
+  demoOn=false;clearInterval(demoT);demoT=null;
+  const b=$('demoBtn');if(b)b.textContent='Смотреть';
+  const f=$('demoFill');
+  if(f){const w=f.getBoundingClientRect().width,p=f.parentElement.getBoundingClientRect().width;
+    f.style.transition='none';f.style.width=(p?w/p*100:0)+'%';}
+}
+function demoToggle(){demoOn?demoPause():demoPlay();}
+function demoNext(){demoShow(demoI+1);demoRestart();}
+function demoPrev(){demoShow(demoI-1);demoRestart();}
 
 /* ================= СПИСОК ИИ ================= */
 function renderAI(){
