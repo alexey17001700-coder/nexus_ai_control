@@ -620,7 +620,7 @@ async function brExec(c){
     else if(a==='screenshot'){
       if(!scOn)await scStart();
       await scGrab();
-      if(scLast){brReport(c.id,'screenshot','data:image/jpeg;base64,'+scLast.slice(0,0)+'['+scLast.length+' байт]');res='кадр '+scLast.length+' байт';}
+      if(scLast){res='кадр '+scLast.length+' байт';}
       else res='кадр не получен';
     }
     else res='неизвестная команда: '+a;
