@@ -1012,6 +1012,9 @@ if(!providers.length){
 if(!activeId&&providers[0])activeId=providers[0].id;
 if(CAP){$('hdrBadge').textContent='APK';$('hdrSub').textContent='ИИ-хаб телефона · native';}
 renderAI();renderChips();renderMsgs();brRender();brPaint();scRender();scLogPaint();
+ctPaint();stRender();rcRender();
+$('scImg').onclick=scTap;
+if(CAP)setTimeout(ctCheck,900);
 if(bridge.on){clearInterval(brTimer);brTimer=setInterval(()=>bridgePull(false),bridge.interval*1000);bridgePull(false);}
 </script>
 </body>
