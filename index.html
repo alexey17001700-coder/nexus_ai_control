@@ -1529,6 +1529,104 @@ function vcToggle(){voice.cmd?vcStop():vcStart();}
 function vcStart(){voice.cmd=true;vSave();vPaint();vStart(true);}
 function vcStop(){voice.cmd=false;vSave();vStop();}
 
+/* ================= ЖИВОЙ ДИАЛОГ (непрерывное общение) ================= */
+let vLiveHold=false, vLiveTimer=null, vLiveBuf='';
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+function vLiveToggle(){voice.live?vLiveStop():vLiveStart();}
+async function vLiveStart(){
+  if(!providers.find(x=>x.id===activeId))return toast('Сначала добавь и выбери ИИ');
+  go('chat');
+  voice.live=true;voice.speak=true;voice.auto=true;vSave();
+  vOn=true;vCmd=false;vLiveHold=false;vLiveBuf='';
+  vPaint();
+  toast('🔁 Живой диалог: говори, я слушаю постоянно. Скажи «стоп» — выключусь');
+  const n=SRP();
+  if(n){
+    try{
+      const perm=await n.checkPermissions();
+      if(perm.speechRecognition!=='granted')await n.requestPermissions();
+      vNative=true;vLiveNativeLoop();return;
+    }catch(e){}
+  }
+  vNative=false;
+  if(!WebSR){toast('Живой диалог доступен только в APK');vLiveStop();return;}
+  vLiveWeb();
+}
+function vLiveStop(){
+  voice.live=false;vLiveHold=false;vLiveBuf='';clearTimeout(vLiveTimer);
+  try{if(vRec){vRec.onend=null;vRec.stop();}}catch(e){}
+  vRec=null;
+  const n=SRP();try{if(n)n.stop();}catch(e){}
+  vOn=false;vPaint();
+  toast('Живой диалог выключен');
+}
+function vLiveWeb(){
+  if(!voice.live)return;
+  try{
+    vRec=new WebSR();
+    vRec.lang='ru-RU';vRec.continuous=true;vRec.interimResults=true;
+    vRec.onresult=e=>{
+      let fin='',int='';
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        if(e.results[i].isFinal)fin+=e.results[i][0].transcript;
+        else int+=e.results[i][0].transcript;
+      }
+      if(fin)vLiveBuf=(vLiveBuf+' '+fin).trim();
+      const shown=(vLiveBuf+' '+int).trim();
+      if(shown){$('input').value=shown;vLiveArm();}
+    };
+    vRec.onerror=e=>{
+      if(e.error==='not-allowed'){toast('Нет доступа к микрофону');vLiveStop();return;}
+      if(voice.live&&!vLiveHold)setTimeout(vLiveWeb,600);
+    };
+    vRec.onend=()=>{if(voice.live&&!vLiveHold)setTimeout(vLiveWeb,300);};
+    vRec.start();
+  }catch(e){if(voice.live)setTimeout(vLiveWeb,800);}
+}
+function vLiveArm(){clearTimeout(vLiveTimer);vLiveTimer=setTimeout(vLiveFire,1600);}
+async function vLiveFire(){
+  if(!voice.live)return;
+  const t=(vLiveBuf||$('input').value||'').trim();
+  vLiveBuf='';$('input').value='';
+  if(!t)return;
+  if(/^(стоп|хватит|выключись|замолчи|остановись)[.!]?$/i.test(t)){vLiveStop();return;}
+  vLiveHold=true;vPaint();
+  try{if(vRec){vRec.onend=null;vRec.stop();}}catch(e){}
+  vRec=null;
+  const prev=voice.speak;voice.speak=false;
+  const ans=await send(t);
+  voice.speak=prev;
+  if(ans&&voice.speak)await doSpeak(ans);
+  if(!voice.live)return;
+  vLiveHold=false;vPaint();
+  if(vNative)return;
+  setTimeout(vLiveWeb,350);
+}
+async function vLiveNativeLoop(){
+  const n=SRP();
+  while(voice.live){
+    if(vLiveHold){await sleep(250);continue;}
+    let t='';
+    try{
+      const r=await n.start({language:'ru-RU',maxResults:1,partialResults:false,popup:false});
+      t=((r&&r.matches&&r.matches[0])||'').trim();
+    }catch(e){
+      if(!voice.live)break;
+      await sleep(700);continue;
+    }
+    if(!voice.live)break;
+    if(!t)continue;
+    if(/^(стоп|хватит|выключись|замолчи|остановись)[.!]?$/i.test(t)){vLiveStop();break;}
+    vLiveHold=true;vPaint();
+    const prev=voice.speak;voice.speak=false;
+    const ans=await send(t);
+    voice.speak=prev;
+    if(ans&&voice.speak)await doSpeak(ans);
+    vLiveHold=false;vPaint();
+  }
+}
+
 async function vStart(cmd){
   if(vOn)return;
   vCmd=!!cmd;
