@@ -165,6 +165,57 @@ textarea{resize:vertical;min-height:70px}
     <div id="cmdList"></div>
   </section>
 
+  <!-- ЭКРАН -->
+  <section class="view" id="view-screen">
+    <div class="note">Живой захват экрана телефона (MediaProjection). Работает <b>только в APK</b> — браузер не даёт доступ к экрану. Нажми «Запустить», подтверди запись в системном окне Android.</div>
+
+    <div class="card">
+      <div class="row">
+        <span class="dot" id="scDot"></span>
+        <div class="grow">
+          <div class="name">Захват экрана</div>
+          <div class="meta" id="scMeta">остановлен</div>
+        </div>
+        <span class="badge" id="scFps">—</span>
+      </div>
+      <div class="row" style="margin-top:11px;gap:8px">
+        <button class="btn pri" style="flex:1" id="scBtn" onclick="scToggle()">Запустить</button>
+        <button class="btn ghost" style="flex:1" onclick="scShot()">Кадр</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <label style="margin-top:0">Качество</label>
+      <select id="scQ" onchange="scSaveQ()">
+        <option value="480">480p — быстро</option>
+        <option value="720" selected>720p — баланс</option>
+        <option value="1080">1080p — чётко</option>
+      </select>
+      <label>Частота обновления, кадр/сек</label>
+      <input id="scFpsIn" type="number" min="1" max="10" value="2" onchange="scSaveQ()"/>
+      <div class="hint">Выше качество и FPS — больше нагрузка на батарею.</div>
+    </div>
+
+    <div class="card" style="padding:8px">
+      <div id="scStage" style="position:relative;background:#05080c;border-radius:12px;overflow:hidden;min-height:180px;display:grid;place-items:center">
+        <img id="scImg" style="width:100%;display:none;border-radius:12px" alt=""/>
+        <div id="scPh" class="empty" style="padding:34px 16px">Экран не транслируется</div>
+      </div>
+      <div class="row" style="margin-top:9px;gap:8px">
+        <button class="btn ghost" style="flex:1" onclick="scPause()" id="scPauseBtn">Пауза</button>
+        <button class="btn ghost" style="flex:1" onclick="scSaveFrame()">Сохранить кадр</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <div class="grow"><div class="name">Журнал экрана</div></div>
+        <button class="btn ghost" onclick="scLogClear()">Очистить</button>
+      </div>
+      <div id="scLog" style="margin-top:10px"></div>
+    </div>
+  </section>
+
   <!-- МОСТ -->
   <section class="view" id="view-bridge">
     <div class="note">Канал удалённых команд. Архитектор пишет команды в файл <b>bridge/commands.json</b> — приложение забирает их и выполняет на телефоне. Результат видно в журнале.</div>
