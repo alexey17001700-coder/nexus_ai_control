@@ -1,4 +1,4 @@
-# Nexus AI Control
+# Wlupidol AI Control
 
 ИИ-хаб и пульт управления телефоном. Работает как веб-приложение (PWA) и как настоящий **APK** для Android.
 
