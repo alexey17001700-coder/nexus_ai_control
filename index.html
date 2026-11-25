@@ -775,7 +775,7 @@ async function scShot(){
 function scSaveFrame(){
   if(!scLast)return toast('Нет кадра');
   const a=document.createElement('a');
-  a.href='data:image/jpeg;base64,'+scLast;
+  a.href=scLast;
   a.download='nexus-screen-'+Date.now()+'.jpg';
   a.click();
   scLogAdd('💾 кадр сохранён');
