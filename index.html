@@ -456,6 +456,7 @@ if(!providers.length){
   activeId=providers[0].id;save();
 }
 if(!activeId&&providers[0])activeId=providers[0].id;
+if(CAP){$('hdrBadge').textContent='APK';$('hdrSub').textContent='ИИ-хаб телефона · native';}
 renderAI();renderChips();renderMsgs();
 </script>
 </body>
