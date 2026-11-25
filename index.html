@@ -867,6 +867,7 @@ async function send(){
     const d=await r.json();
     const ans=d.choices?.[0]?.message?.content || d.message?.content || '(пустой ответ)';
     chats[activeId].push({role:'assistant',content:ans});
+    if(voice.speak)doSpeak(ans);
     p._ok=true;
   }catch(e){
     chats[activeId].push({role:'assistant',content:'⚠ Ошибка: '+e.message});
