@@ -963,6 +963,48 @@ async function runCmd(k){
   }catch(e){toast('Ошибка: '+e.message);}
 }
 
+/* ================= НАВИГАТОР ================= */
+const LS_HOME='nexus_home_addr';
+let vAddr=false;
+function navOpen(geo,web){
+  const AP=(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App)||null;
+  if(AP&&AP.openUrl){try{AP.openUrl({url:geo});return true;}catch(e){}}
+  try{window.open(geo,'_blank');}catch(e){}
+  setTimeout(()=>{try{window.open(web,'_blank');}catch(e){}},700);
+  return true;
+}
+function navTo(addr){
+  addr=String(addr||'').trim();
+  if(!addr)return Promise.resolve('нет адреса');
+  const q=encodeURIComponent(addr);
+  navOpen('geo:0,0?q='+q,'https://yandex.ru/maps/?text='+q);
+  if($('navAddr'))$('navAddr').value=addr;
+  if($('navMeta'))$('navMeta').textContent='маршрут: '+addr;
+  if($('navDot'))$('navDot').className='dot on';
+  return Promise.resolve('навигатор: '+addr);
+}
+function navGo(){
+  const a=$('navAddr').value.trim();
+  if(!a)return toast('Введи адрес');
+  navTo(a).then(r=>{toast('🧭 '+r);doSpeak('Строю маршрут: '+a);});
+}
+function navVoice(){vAddr=true;toast('Скажи адрес');vStart(false);}
+function navHome(){
+  let h=localStorage.getItem(LS_HOME);
+  if(!h){h=prompt('Адрес дома (сохранится в телефоне):','');if(!h)return;localStorage.setItem(LS_HOME,h);}
+  navTo(h).then(r=>{toast('🏠 '+r);doSpeak('Строю маршрут домой');});
+}
+function navHere(){
+  if(!navigator.geolocation)return toast('Геолокация недоступна');
+  toast('Определяю местоположение…');
+  navigator.geolocation.getCurrentPosition(p=>{
+    const la=p.coords.latitude.toFixed(6), lo=p.coords.longitude.toFixed(6);
+    navOpen('geo:'+la+','+lo+'?q='+la+','+lo,'https://yandex.ru/maps/?pt='+lo+','+la+'&z=16&l=map');
+    if($('navMeta'))$('navMeta').textContent='я здесь: '+la+', '+lo;
+    toast('📍 '+la+', '+lo);
+  },()=>toast('Нет доступа к геолокации'),{enableHighAccuracy:true,timeout:9000});
+}
+
 /* ================= МОСТ К ШТАБУ (удалённые команды) ================= */
 const LS_B='nexus_bridge_v1';
 const BR_DEF='https://raw.githubusercontent.com/alexey17001700-coder/nexus_ai_control/main/bridge/commands.json';
