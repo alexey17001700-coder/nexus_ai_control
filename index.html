@@ -672,6 +672,25 @@ async function brExec(c){
       if(scLast){res='кадр '+scLast.length+' байт';}
       else res='кадр не получен';
     }
+    else if(a==='tap'){
+      const n=String(v||'').split(',').map(Number);
+      await ctTap(n[0],n[1]);res='тап '+n[0]+','+n[1];
+    }
+    else if(a==='swipe'){
+      const n=String(v||'').split(',').map(Number);
+      await ctSwipe(n[0],n[1],n[2],n[3],n[4]);res='свайп';
+    }
+    else if(a==='key'){await ctKey(String(v||'back'));res='клавиша '+v;}
+    else if(a==='stream'){
+      const on=(v==='on'||v===true||v===1||v==='1');
+      on?stStart():stStop();
+      res=stream.on?'трансляция вкл':'трансляция выкл';
+    }
+    else if(a==='record'){
+      const on=(v==='on'||v===true||v===1||v==='1');
+      on?rcStart():rcStop();
+      res=recMr?'запись идёт':'запись остановлена';
+    }
     else res='неизвестная команда: '+a;
   }catch(e){res='ошибка: '+e.message;}
   brAdd('▶ '+a+' → '+res);
