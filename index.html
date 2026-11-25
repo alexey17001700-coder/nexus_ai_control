@@ -454,7 +454,7 @@ const CMDS=[
   {ic:'📞',t:'Позвонить',d:'Набрать номер',k:'call'},
   {ic:'🗺️',t:'Открыть карты',d:'Текущие координаты',k:'geo'},
   {ic:'📸',t:'Камера',d:'Сделать снимок',k:'cam'},
-  {ic:'🛰️',t:'Мост к Штабу',d:'ЭТАП 3 — удалённые команды',k:'bridge'}
+  {ic:'🛰️',t:'Мост к Штабу',d:'Удалённые команды',k:'bridge'}
 ];
 function renderCmds(){
   $('cmdList').innerHTML=CMDS.map(c=>`<div class="cmd" onclick="runCmd('${c.k}')">
