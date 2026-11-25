@@ -1,0 +1,86 @@
+package com.nexus.aicontrol;
+
+import android.content.Intent;
+import android.provider.Settings;
+
+import com.getcapacitor.JSObject;
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.CapacitorPlugin;
+
+/**
+ * Плагин управления телефоном. Доступен из JS как Capacitor.Plugins.NexusControl
+ *   ready()        — включена ли служба управления
+ *   openSettings() — открыть экран «Специальные возможности»
+ *   tap(x,y)       — нажатие в точке экрана
+ *   swipe(x1,y1,x2,y2,ms) — свайп
+ *   key(name)      — back / home / recents / notifications
+ */
+@CapacitorPlugin(name = "NexusControl")
+public class NexusControlPlugin extends Plugin {
+
+    private NexusAccessibilityService svc() {
+        return NexusAccessibilityService.instance;
+    }
+
+    @PluginMethod
+    public void ready(PluginCall call) {
+        JSObject r = new JSObject();
+        r.put("ready", svc() != null);
+        call.resolve(r);
+    }
+
+    @PluginMethod
+    public void openSettings(PluginCall call) {
+        try {
+            Intent i = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(i);
+        } catch (Exception e) { }
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void tap(PluginCall call) {
+        Float x = call.getFloat("x");
+        Float y = call.getFloat("y");
+        if (x == null || y == null) { call.reject("нужны x и y"); return; }
+        NexusAccessibilityService s = svc();
+        if (s == null) { call.reject("Служба управления выключена"); return; }
+        JSObject r = new JSObject();
+        r.put("ok", s.tap(x, y));
+        call.resolve(r);
+    }
+
+    @PluginMethod
+    public void swipe(PluginCall call) {
+        Float x1 = call.getFloat("x1");
+        Float y1 = call.getFloat("y1");
+        Float x2 = call.getFloat("x2");
+        Float y2 = call.getFloat("y2");
+        Integer ms = call.getInt("ms", 300);
+        if (x1 == null || y1 == null || x2 == null || y2 == null) {
+            call.reject("нужны x1,y1,x2,y2"); return;
+        }
+        NexusAccessibilityService s = svc();
+        if (s == null) { call.reject("Служба управления выключена"); return; }
+        JSObject r = new JSObject();
+        r.put("ok", s.swipe(x1, y1, x2, y2, ms == null ? 300 : ms));
+        call.resolve(r);
+    }
+
+    @PluginMethod
+    public void key(PluginCall call) {
+        String name = call.getString("name", "back");
+        NexusAccessibilityService s = svc();
+        if (s == null) { call.reject("Служба управления выключена"); return; }
+        int code = 4;
+        if ("home".equals(name)) code = 3;
+        else if ("recents".equals(name)) code = 187;
+        else if ("notifications".equals(name)) code = 84;
+        JSObject r = new JSObject();
+        r.put("ok", s.key(code));
+        call.resolve(r);
+    }
+}
