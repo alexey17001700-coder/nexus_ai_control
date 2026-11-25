@@ -381,6 +381,27 @@ async function send(){
   $('sendBtn').disabled=false;
 }
 
+/* ================= МОСТ CAPACITOR (APK) ================= */
+const CAP = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const PL  = (window.Capacitor && window.Capacitor.Plugins) || {};
+async function nativeCmd(k){
+  try{
+    if(k==='vibrate' && PL.Haptics){ await PL.Haptics.vibrate({duration:120}); return 'Вибрация (native)'; }
+    if(k==='batt' && PL.Device){ const i=await PL.Device.getBatteryInfo(); return 'Батарея: '+Math.round((i.batteryLevel||0)*100)+'%'+(i.isCharging?' ⚡':''); }
+    if(k==='clip' && PL.Clipboard){ const r=await PL.Clipboard.read(); return r.value?('📋 '+r.value.slice(0,60)):'Буфер пуст'; }
+    if(k==='geo' && PL.Geolocation){
+      const p=await PL.Geolocation.getCurrentPosition();
+      window.open('https://maps.google.com/?q='+p.coords.latitude+','+p.coords.longitude,'_blank');
+      return 'Карты открыты';
+    }
+    if(k==='cam' && PL.Camera){
+      const ph=await PL.Camera.getPhoto({quality:80,resultType:'uri'});
+      return 'Снимок: '+String(ph.webPath||'').slice(0,40);
+    }
+  }catch(e){ return 'Ошибка native: '+e.message; }
+  return null;
+}
+
 /* ================= КОМАНДЫ ТЕЛЕФОНА ================= */
 const CMDS=[
   {ic:'🔦',t:'Фонарик',d:'Вкл/выкл вспышку',k:'torch'},
