@@ -710,10 +710,10 @@ function scSaveQ(){
   if(scOn&&!scPaused){scStopLoop();scStartLoop();}
 }
 function scRender(){
-  $('scQ').value=String(screen.q||720);
+  $('scQ').value=String(screen.q||75);
   $('scFpsIn').value=screen.fps||2;
   $('scDot').className='dot '+(scOn?'on':'');
-  $('scMeta').textContent=scOn?(scPaused?'пауза':'трансляция · '+screen.q+'p'):'остановлен';
+  $('scMeta').textContent=scOn?(scPaused?'пауза':'трансляция · JPEG '+screen.q):'остановлен';
   $('scBtn').textContent=scOn?'Остановить':'Запустить';
   $('scPauseBtn').textContent=scPaused?'Продолжить':'Пауза';
   $('scFps').textContent=scOn&&!scPaused?(screen.fps+' fps'):'—';
