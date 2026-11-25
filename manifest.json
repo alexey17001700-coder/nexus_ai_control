@@ -1,6 +1,6 @@
 {
-  "name": "Nexus AI Control",
-  "short_name": "Nexus AI",
+  "name": "Wlupidol AI Control",
+  "short_name": "Wlupidol AI",
   "description": "Добавление ИИ-провайдеров, чат и управление телефоном",
   "start_url": "./index.html",
   "display": "standalone",
