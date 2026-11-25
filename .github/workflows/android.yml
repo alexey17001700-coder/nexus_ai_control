@@ -45,11 +45,14 @@ jobs:
           D=android/app/src/main/java/com/nexus/aicontrol
           mkdir -p "$D"
           cp native/android/NexusNativePlugin.java.txt "$D/NexusNativePlugin.java"
+          cp native/android/ScreenPlugin.java.txt "$D/ScreenPlugin.java"
+          cp native/android/ScreenCaptureService.java.txt "$D/ScreenCaptureService.java"
           cp native/android/MainActivity.java.txt "$D/MainActivity.java"
           M=android/app/src/main/AndroidManifest.xml
-          sed -i 's|<application|<uses-permission android:name="android.permission.FLASHLIGHT"/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>\n    <application|' "$M"
+          sed -i 's|<application|<uses-permission android:name="android.permission.FLASHLIGHT"/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>\n    <application|' "$M"
+          sed -i 's|</application>|<service android:name=".ScreenCaptureService" android:foregroundServiceType="mediaProjection" android:exported="false"/>\n    </application>|' "$M"
           echo "--- манифест ---"
-          grep -n "uses-permission" "$M" || true
+          grep -n "uses-permission\|ScreenCaptureService" "$M" || true
           echo "--- java ---"
           ls -la "$D"
 
