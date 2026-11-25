@@ -1,0 +1,17 @@
+{
+  "seq": 0,
+  "note": "Канал удалённых команд Nexus AI Control. Архитектор увеличивает seq и кладёт команды в cmds. Приложение забирает новые seq и выполняет их на телефоне.",
+  "actions": {
+    "torch": "value: on | off",
+    "volume": "value: 0..100",
+    "toast": "value: текст",
+    "notify": "title + value: текст",
+    "vibrate": "без value",
+    "speak": "value: текст — озвучить голосом",
+    "open": "value: URL",
+    "clip": "value: текст — положить в буфер",
+    "ask": "value: вопрос — спросить активный ИИ и озвучить ответ",
+    "status": "без value — батарея и сеть"
+  },
+  "cmds": []
+}
