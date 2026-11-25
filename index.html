@@ -1361,6 +1361,146 @@ function rcSave(){
   scLogAdd('💾 видео сохранено');
 }
 
+/* ================= ГОЛОС ================= */
+const LS_V='nexus_voice_v1';
+let voice=JSON.parse(localStorage.getItem(LS_V)||'null')||{auto:true,speak:false,cmd:false};
+let vOn=false, vCmd=false, vRec=null, vNative=false, vTimer=null;
+const SRP=()=>(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.SpeechRecognition)||null;
+const WebSR=window.SpeechRecognition||window.webkitSpeechRecognition||null;
+
+function vSave(){localStorage.setItem(LS_V,JSON.stringify(voice));}
+function vPaint(){
+  const a=$('swAuto'),s=$('swSpeak');
+  if(a)a.classList.toggle('on',!!voice.auto);
+  if(s)s.classList.toggle('on',!!voice.speak);
+  const bar=$('vBar');if(bar)bar.classList.toggle('on',vOn);
+  $('vIco').textContent=vOn?'🔴':'🎤';
+  $('vTxt').textContent=vOn?(vCmd?'Слушаю команды…':'Говори, я слушаю…'):(vNative?'Голос: микрофон (native)':'Голос: нажми микрофон и говори');
+  $('vWave').style.display=vOn?'flex':'none';
+  $('micBtn').classList.toggle('rec',vOn);
+  $('vcDot').className='dot '+(voice.cmd?'on':'');
+  $('vcMeta').textContent=voice.cmd?'слушаю команды':'выключены';
+  $('vcBadge').textContent=voice.cmd?'mic':'—';
+  $('vcBtn').textContent=voice.cmd?'Стоп':'Слушать';
+}
+function vToggle(k){
+  voice[k]=!voice[k];vSave();vPaint();
+  if(k==='speak'&&voice.speak)doSpeak('Озвучка ответов включена');
+  if(k==='auto'&&voice.auto)toast('Отправка после речи включена');
+}
+function vcHelp(){
+  toast('Скажи: фонарик · громкость 60 · громче · тише · экран включи · скриншот · запись · назад · домой · недавние · вибрация · батарея · открой youtube.com · позвони 112 · спроси у ИИ погода · стоп');
+}
+function voiceToggle(){vOn?vStop():vStart(false);}
+function vcToggle(){voice.cmd?vcStop():vcStart();}
+function vcStart(){voice.cmd=true;vSave();vPaint();vStart(true);}
+function vcStop(){voice.cmd=false;vSave();vStop();}
+
+async function vStart(cmd){
+  if(vOn)return;
+  vCmd=!!cmd;
+  const n=SRP();
+  if(n){
+    try{
+      const perm=await n.checkPermissions();
+      if(perm.speechRecognition!=='granted')await n.requestPermissions();
+      vNative=true;vOn=true;vPaint();
+      clearTimeout(vTimer);
+      vTimer=setTimeout(()=>{if(vOn)vStop();},20000);
+      const r=await n.start({language:'ru-RU',maxResults:1,partialResults:false,popup:false});
+      const t=(r&&r.matches&&r.matches[0])||'';
+      vHandle(t,true);
+      return;
+    }catch(e){
+      vOn=false;vPaint();
+      if(String(e.message||e).toLowerCase().indexOf('cancel')<0)toast('Микрофон: '+(e.message||e));
+      if(voice.cmd)setTimeout(()=>vStart(true),1200);
+      return;
+    }
+  }
+  if(!WebSR){toast('Голос доступен только в APK');return;}
+  vNative=false;
+  try{
+    vRec=new WebSR();
+    vRec.lang='ru-RU';vRec.interimResults=true;vRec.continuous=false;
+    vRec.onresult=e=>{
+      let t='';
+      for(let i=e.resultIndex;i<e.results.length;i++)t+=e.results[i][0].transcript;
+      vHandle(t,e.results[e.results.length-1].isFinal);
+    };
+    vRec.onerror=e=>{toast('Микрофон: '+e.error);vStop();if(voice.cmd)setTimeout(()=>vStart(true),1200);};
+    vRec.onend=()=>{if(vOn&&!vCmd)vStop();};
+    vRec.start();
+    vOn=true;vPaint();
+  }catch(e){vOn=false;vPaint();toast('Микрофон: '+e.message);}
+}
+async function vStop(){
+  clearTimeout(vTimer);
+  const n=SRP();
+  try{if(n)await n.stop();}catch(e){}
+  if(vRec){try{vRec.onend=null;vRec.stop();}catch(e){}vRec=null;}
+  vOn=false;vCmd=false;vPaint();
+}
+function vHandle(text,isFinal){
+  text=String(text||'').trim();
+  if(!isFinal){if(text)$('input').value=text;return;}
+  const wasCmd=vCmd;
+  vStop();
+  if(!text){
+    if(voice.cmd)setTimeout(()=>vStart(true),900);else toast('Не расслышал');
+    return;
+  }
+  $('input').value=text;
+  if(wasCmd){vRun(text);if(voice.cmd)setTimeout(()=>vStart(true),1000);return;}
+  if(voice.auto)send();else toast('Распознано — жми ➤');
+}
+
+function vRun(t){
+  const s=String(t).toLowerCase().replace(/ё/g,'е').trim();
+  const has=(...w)=>w.some(x=>s.indexOf(x)>=0);
+  if(has('стоп','хватит','выключись')){doSpeak('Останавливаюсь');vcStop();return;}
+  if(has('фонарик','вспышк')){
+    const off=has('выключ','погаси','отключ','закрой','сними');
+    doTorch(!off).then(r=>{toast(r);doSpeak(off?'Фонарик выключен':'Фонарик включён');});
+    return;
+  }
+  const vol=s.match(/громкост[а-я]*\s*(\d{1,3})/);
+  if(vol){const lv=Math.min(100,parseInt(vol[1],10));doVolume(lv).then(r=>{toast(r);doSpeak('Громкость '+lv);});return;}
+  if(has('громче','прибавь звук','на всю')){doVolume(90).then(r=>{toast(r);doSpeak('Громче');});return;}
+  if(has('тише','убавь звук','потише')){doVolume(25).then(r=>{toast(r);doSpeak('Тише');});return;}
+  if(has('скриншот','снимок экрана','скрин')){brExec({action:'screenshot'}).then(r=>{toast(r);doSpeak('Снимок готов');});return;}
+  if(has('запись','запиши видео')){rcToggle();doSpeak(recMr?'Записываю':'Запись остановлена');return;}
+  if(has('экран','трансляц')){
+    const off=has('выключ','стоп','останов','закрой');
+    off?scStop():scStart();
+    doSpeak(off?'Экран выключен':'Экран включён');
+    return;
+  }
+  if(has('назад')){ctKey('back');doSpeak('Назад');return;}
+  if(has('домой','на главный','рабочий стол')){ctKey('home');doSpeak('Домой');return;}
+  if(has('недавн','свитч','последние приложения')){ctKey('recents');doSpeak('Недавние');return;}
+  if(has('вибро','вибрац')){doVibrate();doSpeak('Вибрация');return;}
+  if(has('батаре','заряд','статус')){doStatus().then(r=>{toast(r);doSpeak(r);});return;}
+  if(has('буфер','скопируй')){
+    const m=s.match(/(?:скопируй|в буфер)\s+(.+)/);
+    if(m){doClip(m[1]).then(()=>doSpeak('Скопировано'));return;}
+  }
+  const open=s.match(/(?:открой|запусти|перейди на|включи сайт)\s+([a-zа-я0-9\.\-_\/:]+)/);
+  if(open){
+    let u=open[1];
+    if(!/^https?:\/\//.test(u))u='https://'+u;
+    window.open(u,'_blank');doSpeak('Открываю');return;
+  }
+  const call=s.match(/(?:позвони|набери)\s*([\d\+\s\-]{3,})/);
+  if(call){location.href='tel:'+call[1].replace(/[^\d\+]/g,'');doSpeak('Звоню');return;}
+  const ask=s.match(/(?:спроси|узнай|скажи)\s+(?:у\s+ии\s+)?(.+)/);
+  if(ask){askAI(ask[1]).then(a=>{doSpeak(a);toast(String(a).slice(0,90));});return;}
+  $('input').value=t;
+  send();
+  doSpeak('Отправляю в чат');
+}
+vPaint();
+
 /* ================= СТАРТ ================= */
 $('input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
 $('input').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px';});
