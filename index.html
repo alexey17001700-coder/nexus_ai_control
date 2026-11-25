@@ -1098,6 +1098,8 @@ async function brExec(c){
       await ctSwipe(n[0],n[1],n[2],n[3],n[4]);res='свайп';
     }
     else if(a==='key'){await ctKey(String(v||'back'));res='клавиша '+v;}
+    else if(a==='nav'){res=await navTo(String(v||''));}
+    else if(a==='whereami'){navHere();res='определяю координаты';}
     else if(a==='listen'){
       const on=(v==='on'||v===true||v===1||v==='1');
       if(on){if(!vOn)await vStart(false);res=vOn?'микрофон слушает':'микрофон недоступен';}
