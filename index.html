@@ -1510,12 +1510,16 @@ async function vStop(){
 function vHandle(text,isFinal){
   text=String(text||'').trim();
   if(!isFinal){if(text)$('input').value=text;return;}
-  const wasCmd=vCmd;
+  const wasCmd=vCmd, wasAddr=vAddr;
+  vAddr=false;
   vStop();
   if(!text){
-    if(voice.cmd)setTimeout(()=>vStart(true),900);else toast('Не расслышал');
+    if(wasAddr)toast('Не расслышал адрес');
+    else if(voice.cmd)setTimeout(()=>vStart(true),900);
+    else toast('Не расслышал');
     return;
   }
+  if(wasAddr){navTo(text).then(r=>{toast('🧭 '+r);doSpeak('Строю маршрут: '+text);});return;}
   $('input').value=text;
   if(wasCmd){vRun(text);if(voice.cmd)setTimeout(()=>vStart(true),1000);return;}
   if(voice.auto)send();else toast('Распознано — жми ➤');
