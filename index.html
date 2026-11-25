@@ -934,7 +934,7 @@ async function send(textArg){
     });
     if(!r.ok){throw new Error('HTTP '+r.status+' '+(await r.text()).slice(0,160));}
     const d=await r.json();
-    const ans=d.choices?.[0]?.message?.content || d.message?.content || '(пустой ответ)';
+    ans=d.choices?.[0]?.message?.content || d.message?.content || '(пустой ответ)';
     chats[activeId].push({role:'assistant',content:ans});
     if(voice.speak)doSpeak(ans);
     p._ok=true;
