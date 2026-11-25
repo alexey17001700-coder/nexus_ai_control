@@ -1569,6 +1569,7 @@ async function vStart(cmd){
 }
 async function vStop(){
   clearTimeout(vTimer);
+  voice.live=false;vLiveHold=false;vLiveBuf='';clearTimeout(vLiveTimer);
   const n=SRP();
   try{if(n)await n.stop();}catch(e){}
   if(vRec){try{vRec.onend=null;vRec.stop();}catch(e){}vRec=null;}
