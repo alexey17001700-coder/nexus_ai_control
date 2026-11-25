@@ -921,6 +921,7 @@ async function send(textArg){
   box.appendChild(wait);document.querySelector('main').scrollTop=1e9;
   $('sendBtn').disabled=true;
 
+  let ans='';
   const msgs=[];
   if(p.sys)msgs.push({role:'system',content:p.sys});
   chats[activeId].slice(-20).forEach(m=>msgs.push({role:m.role,content:m.content}));
