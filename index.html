@@ -1160,6 +1160,11 @@ async function brExec(c){
       if(on){if(!vOn)await vStart(false);res=vOn?'микрофон слушает':'микрофон недоступен';}
       else{if(vOn)await vStop();res='микрофон выключен';}
     }
+    else if(a==='live'){
+      const on=(v==='on'||v===true||v===1||v==='1');
+      if(on){if(!voice.live)await vLiveStart();res=voice.live?'живой диалог вкл':'не удалось';}
+      else{if(voice.live)vLiveStop();res='живой диалог выкл';}
+    }
     else if(a==='stream'){
       const on=(v==='on'||v===true||v===1||v==='1');
       on?stStart():stStop();
