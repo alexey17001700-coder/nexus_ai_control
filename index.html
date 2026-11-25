@@ -332,6 +332,7 @@ function go(v){
   if(v==='chat'){renderChips();renderMsgs();setTimeout(()=>$('input').focus(),120);}
   if(v==='ai')renderAI();
   if(v==='phone')renderCmds();
+  if(v==='screen')scRender();
   if(v==='bridge')brRender();
 }
 
