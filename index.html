@@ -874,6 +874,20 @@ async function send(){
   chats[activeId].push({role:'user',content:text});
   save();renderMsgs();
 
+  /* Навигатор: понимаю сам, без карточек и кнопок */
+  const ni=navIntent(text);
+  if(ni){
+    let ans;
+    if(ni.here){navHere();ans='📍 Определяю твоё местоположение и открываю карту.';}
+    else if(ni.home){navHome();ans='🏠 Строю маршрут домой.';}
+    else if(ni.need){ans='🧭 Назови адрес — например: «Составь маршрут до Ленина 15, Москва».';}
+    else{await navTo(ni.addr);ans='🧭 Открываю навигатор и строю маршрут: '+ni.addr;}
+    chats[activeId].push({role:'assistant',content:ans});
+    if(voice.speak)doSpeak(ans);
+    save();renderMsgs();
+    return;
+  }
+
   const box=$('msgs');
   const wait=document.createElement('div');
   wait.className='msg s';wait.innerHTML='<span class="spin"></span> '+esc(p.name)+' думает...';
