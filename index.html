@@ -422,6 +422,7 @@ function renderCmds(){
 }
 async function runCmd(k){
   try{
+    if(CAP){ const n=await nativeCmd(k); if(n)return toast(n); }
     if(k==='vibrate'){navigator.vibrate&&navigator.vibrate([80,60,80]);return toast('Вибрация');}
     if(k==='batt'){
       const b=await navigator.getBattery?.();
