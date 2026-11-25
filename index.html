@@ -988,12 +988,19 @@ function navTo(addr){
   if($('navDot'))$('navDot').className='dot on';
   return Promise.resolve('навигатор: '+addr);
 }
-function navGo(){
-  const a=$('navAddr').value.trim();
-  if(!a)return toast('Введи адрес');
-  navTo(a).then(r=>{toast('🧭 '+r);doSpeak('Строю маршрут: '+a);});
+/* Понимаю намерение «нужен навигатор» прямо из сообщения в чате */
+function navIntent(t){
+  const s=String(t||'').toLowerCase().replace(/ё/g,'е').trim();
+  const has=(...w)=>w.some(x=>s.indexOf(x)>=0);
+  if(!has('навигатор','маршрут','проложи','построй путь','веди меня','как доехать','как добраться','доехать до','добраться до','путь до','дорогу до','довези','покажи на карте','найди на карте','где находится','поехали до','отвези')) return null;
+  if(has('где я','мое местоположение','где нахожусь','где сейчас')) return {here:true};
+  if(has('домой','до дома','к дому')) return {home:true};
+  const m=s.match(/(?:навигатор[а-я]*|маршрут[а-я]*|проложи[а-я]*|построй путь|веди меня|довези[а-я]*|отвези[а-я]*|как доехать до|как добраться до|доехать до|добраться до|путь до|дорогу до|покажи на карте|найди на карте|где находится|поехали до)\s*(.+)/);
+  let addr=m?m[1]:'';
+  addr=addr.replace(/^(до|в|на|к|по)\s+/,'').replace(/[?.!,]+$/,'').trim();
+  if(!addr) return {need:true};
+  return {addr:addr};
 }
-function navVoice(){vAddr=true;toast('Скажи адрес');vStart(false);}
 function navHome(){
   let h=localStorage.getItem(LS_HOME);
   if(!h){h=prompt('Адрес дома (сохранится в телефоне):','');if(!h)return;localStorage.setItem(LS_HOME,h);}
