@@ -685,6 +685,90 @@ function brReport(id,action,res){
   }catch(e){}
 }
 
+/* ================= ЭКРАН (MediaProjection) ================= */
+const LS_SC='nexus_screen_v1';
+let screen=JSON.parse(localStorage.getItem(LS_SC)||'null')||{q:720,fps:2};
+let scTimer=null, scOn=false, scPaused=false, scLog=[], scLast='';
+const NS=()=>(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.NexusScreen)||null;
+
+function scSaveQ(){
+  screen.q=parseInt($('scQ').value,10)||720;
+  screen.fps=Math.max(1,Math.min(10,parseInt($('scFpsIn').value,10)||2));
+  localStorage.setItem(LS_SC,JSON.stringify(screen));
+  if(scOn&&!scPaused){scStopLoop();scStartLoop();}
+}
+function scRender(){
+  $('scQ').value=String(screen.q||720);
+  $('scFpsIn').value=screen.fps||2;
+  $('scDot').className='dot '+(scOn?'on':'');
+  $('scMeta').textContent=scOn?(scPaused?'пауза':'трансляция · '+screen.q+'p'):'остановлен';
+  $('scBtn').textContent=scOn?'Остановить':'Запустить';
+  $('scPauseBtn').textContent=scPaused?'Продолжить':'Пауза';
+  $('scFps').textContent=scOn&&!scPaused?(screen.fps+' fps'):'—';
+}
+function scLogAdd(t){scLog.unshift(new Date().toLocaleTimeString()+' · '+t);scLogPaint();}
+function scLogClear(){scLog=[];scLogPaint();}
+function scLogPaint(){
+  const b=$('scLog');
+  if(!scLog.length){b.innerHTML='<div class="empty" style="padding:16px">Пока пусто</div>';return;}
+  b.innerHTML=scLog.slice(0,30).map(l=>'<div class="meta" style="padding:5px 0;border-bottom:1px solid var(--line);white-space:normal">'+esc(l)+'</div>').join('');
+}
+function scToggle(){scOn?scStop():scStart();}
+async function scStart(){
+  const p=NS();
+  if(!p){toast('Захват экрана доступен только в APK');scLogAdd('⚠ нет нативного плагина NexusScreen');return;}
+  try{
+    await p.request({quality:screen.q});
+    scOn=true;scPaused=false;scRender();
+    $('scImg').style.display='block';$('scPh').style.display='none';
+    scLogAdd('▶ захват запущен ('+screen.q+'p)');
+    scStartLoop();
+  }catch(e){toast('Отказ: '+e.message);scLogAdd('⚠ '+e.message);}
+}
+async function scStop(){
+  const p=NS();
+  scStopLoop();
+  try{if(p)await p.stop();}catch(e){}
+  scOn=false;scPaused=false;scRender();
+  scLogAdd('■ захват остановлен');
+}
+function scStartLoop(){
+  scStopLoop();
+  const ms=Math.round(1000/Math.max(1,screen.fps||2));
+  scTimer=setInterval(scGrab,ms);
+}
+function scStopLoop(){if(scTimer){clearInterval(scTimer);scTimer=null;}}
+function scPause(){
+  if(!scOn)return toast('Сначала запусти захват');
+  scPaused=!scPaused;
+  if(scPaused){scStopLoop();scLogAdd('⏸ пауза');}else{scStartLoop();scLogAdd('▶ продолжение');}
+  scRender();
+}
+async function scGrab(){
+  if(!scOn||scPaused)return;
+  const p=NS();
+  try{
+    const r=await p.capture({quality:screen.q});
+    if(r&&r.image){
+      scLast=r.image;
+      $('scImg').src='data:image/jpeg;base64,'+r.image;
+    }
+  }catch(e){scLogAdd('⚠ кадр: '+e.message);}
+}
+async function scShot(){
+  if(!scOn)return toast('Сначала запусти захват');
+  await scGrab();
+  if(scLast){toast('Кадр получен');scLogAdd('📸 одиночный кадр');}
+}
+function scSaveFrame(){
+  if(!scLast)return toast('Нет кадра');
+  const a=document.createElement('a');
+  a.href='data:image/jpeg;base64,'+scLast;
+  a.download='nexus-screen-'+Date.now()+'.jpg';
+  a.click();
+  scLogAdd('💾 кадр сохранён');
+}
+
 /* ================= СТАРТ ================= */
 $('input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
 $('input').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px';});
