@@ -9,6 +9,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(NexusNativePlugin.class);
         registerPlugin(ScreenPlugin.class);
+        registerPlugin(NexusControlPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }
