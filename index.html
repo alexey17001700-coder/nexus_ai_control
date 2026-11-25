@@ -259,6 +259,21 @@ details .body li{margin-bottom:4px}
   <!-- ТЕЛЕФОН -->
   <section class="view" id="view-phone">
     <div class="note">Панель управления телефоном. Фонарик и громкость работают в APK-версии через нативный модуль NexusNative.</div>
+    <div class="card">
+      <div class="row">
+        <span class="dot" id="vcDot"></span>
+        <div class="grow">
+          <div class="name">Голосовые команды</div>
+          <div class="meta" id="vcMeta">выключены</div>
+        </div>
+        <span class="badge" id="vcBadge">—</span>
+      </div>
+      <div class="row" style="margin-top:11px;gap:8px">
+        <button class="btn pri" style="flex:1" id="vcBtn" onclick="vcToggle()">Слушать</button>
+        <button class="btn ghost" style="flex:1" onclick="vcHelp()">Что сказать</button>
+      </div>
+      <div class="hint">«фонарик», «фонарик выключи», «громкость 60», «громче», «тише», «экран включи», «скриншот», «запись», «назад», «домой», «недавние», «вибрация», «батарея», «открой youtube.com», «позвони 112», «спроси у ИИ …», «стоп».</div>
+    </div>
     <div id="cmdList"></div>
   </section>
 
