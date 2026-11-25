@@ -812,6 +812,8 @@ async function scGrab(){
     const r=await p.capture({quality:screen.q});
     if(r&&r.image){
       scLast=r.image.indexOf('data:')===0?r.image:('data:image/jpeg;base64,'+r.image);
+      if(r.w)scW=r.w;
+      if(r.h)scH=r.h;
       $('scImg').src=scLast;
     }
   }catch(e){scLogAdd('⚠ кадр: '+e.message);}
