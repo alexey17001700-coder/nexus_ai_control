@@ -1506,7 +1506,7 @@ function rcSave(){
 }
 
 /* ================= ГОЛОС ================= */
-const LS_V='nexus_voice_v1';
+const LS_V='wlupidol_voice_v1';
 let voice=JSON.parse(localStorage.getItem(LS_V)||'null')||{auto:true,speak:false,cmd:false};
 let vOn=false, vCmd=false, vRec=null, vNative=false, vTimer=null;
 const SRP=()=>(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.SpeechRecognition)||null;
