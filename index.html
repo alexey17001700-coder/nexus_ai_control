@@ -699,7 +699,7 @@ function brReport(id,action,res){
 
 /* ================= ЭКРАН (MediaProjection) ================= */
 const LS_SC='nexus_screen_v1';
-let screen=JSON.parse(localStorage.getItem(LS_SC)||'null')||{q:720,fps:2};
+let screen=JSON.parse(localStorage.getItem(LS_SC)||'null')||{q:75,fps:2};
 let scTimer=null, scOn=false, scPaused=false, scLog=[], scLast='';
 const NS=()=>(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.NexusScreen)||null;
 
