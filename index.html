@@ -185,11 +185,11 @@ textarea{resize:vertical;min-height:70px}
     </div>
 
     <div class="card">
-      <label style="margin-top:0">Качество</label>
+      <label style="margin-top:0">Качество JPEG</label>
       <select id="scQ" onchange="scSaveQ()">
-        <option value="480">480p — быстро</option>
-        <option value="720" selected>720p — баланс</option>
-        <option value="1080">1080p — чётко</option>
+        <option value="50">Эконом — меньше трафика</option>
+        <option value="75" selected>Баланс</option>
+        <option value="92">Максимум — чётко</option>
       </select>
       <label>Частота обновления, кадр/сек</label>
       <input id="scFpsIn" type="number" min="1" max="10" value="2" onchange="scSaveQ()"/>
