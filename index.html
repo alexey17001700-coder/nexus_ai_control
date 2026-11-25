@@ -830,6 +830,154 @@ function scSaveFrame(){
   scLogAdd('💾 кадр сохранён');
 }
 
+/* ================= УПРАВЛЕНИЕ ЭКРАНОМ (Accessibility) ================= */
+let scW=0, scH=0, ctReady=false;
+const NC=()=>(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.NexusControl)||null;
+function ctPaint(){
+  $('ctDot').className='dot '+(ctReady?'on':'');
+  $('ctMeta').textContent=ctReady?'служба активна':'служба выключена';
+  $('ctBadge').textContent=ctReady?'tap':'—';
+}
+async function ctCheck(){
+  const p=NC();
+  if(!p){ctReady=false;ctPaint();return toast('Управление доступно только в APK');}
+  try{const r=await p.ready();ctReady=!!r.ready;}catch(e){ctReady=false;}
+  ctPaint();
+  toast(ctReady?'Управление готово':'Включи службу Nexus Control');
+}
+function ctSettings(){
+  const p=NC();
+  if(!p)return toast('Только в APK');
+  p.openSettings().catch(()=>{});
+  toast('Настройки → Специальные возможности → Nexus Control');
+}
+async function ctTap(x,y){
+  const p=NC();
+  if(!p)return toast('Только в APK');
+  if(isNaN(x)||isNaN(y))return toast('Нет координат');
+  try{await p.tap({x:Math.round(x),y:Math.round(y)});scLogAdd('👆 тап '+Math.round(x)+','+Math.round(y));}
+  catch(e){toast('Тап: '+e.message);}
+}
+async function ctSwipe(x1,y1,x2,y2,ms){
+  const p=NC();
+  if(!p)return toast('Только в APK');
+  try{await p.swipe({x1:Math.round(x1),y1:Math.round(y1),x2:Math.round(x2),y2:Math.round(y2),ms:ms||300});scLogAdd('↔ свайп');}
+  catch(e){toast('Свайп: '+e.message);}
+}
+async function ctKey(name){
+  const p=NC();
+  if(!p)return toast('Только в APK');
+  try{await p.key({name:name});scLogAdd('⌨ '+name);}catch(e){toast(e.message);}
+}
+function scTap(ev){
+  if(!scOn)return toast('Сначала запусти захват');
+  if(!scW||!scH)return toast('Нет размеров экрана');
+  const r=$('scImg').getBoundingClientRect();
+  ctTap((ev.clientX-r.left)/r.width*scW,(ev.clientY-r.top)/r.height*scH);
+}
+
+/* ================= ТРАНСЛЯЦИЯ НА ШТАБ ================= */
+const LS_ST='nexus_stream_v1';
+let stream=JSON.parse(localStorage.getItem(LS_ST)||'null')||{url:'',interval:5,on:false};
+let stTimer=null, stSent=0;
+function stSave(){
+  stream.url=$('stUrl').value.trim();
+  stream.interval=Math.max(2,parseInt($('stInt').value||'5',10)||5);
+  localStorage.setItem(LS_ST,JSON.stringify(stream));
+  toast('Настройки трансляции сохранены');
+  if(stream.on)stStart();
+}
+function stRender(){
+  $('stUrl').value=stream.url||'';
+  $('stInt').value=stream.interval||5;
+  $('stBtn').textContent=stream.on?'Остановить трансляцию':'Начать трансляцию';
+  $('stInfo').textContent=stream.on?('отправлено кадров: '+stSent):'Кадры уходят POST-ом в JSON: {device, w, h, image, ts}.';
+}
+function stToggle(){stream.on?stStop():stStart();}
+function stStart(){
+  if(!stream.url)return toast('Укажи URL приёма');
+  if(!scOn)return toast('Сначала запусти захват экрана');
+  stream.on=true;stSent=0;localStorage.setItem(LS_ST,JSON.stringify(stream));
+  clearInterval(stTimer);stTimer=setInterval(stPush,stream.interval*1000);
+  stRender();scLogAdd('📡 трансляция на Штаб включена');
+}
+function stStop(){
+  stream.on=false;clearInterval(stTimer);stTimer=null;
+  localStorage.setItem(LS_ST,JSON.stringify(stream));stRender();
+  scLogAdd('📡 трансляция остановлена');
+}
+async function stPush(){
+  if(!stream.on||!scLast)return;
+  try{
+    await fetch(stream.url,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({device:CAP?'android':'web',w:scW,h:scH,image:scLast,ts:Date.now()})});
+    stSent++;stRender();
+  }catch(e){scLogAdd('⚠ трансляция: '+e.message);}
+}
+
+/* ================= ЗАПИСЬ ВИДЕО ================= */
+let recMr=null, recChunks=[], recTimer=null, recT0=0, recTick=null, recBlob=null;
+function rcMime(){
+  const list=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+  for(const m of list){try{if(window.MediaRecorder&&MediaRecorder.isTypeSupported(m))return m;}catch(e){}}
+  return '';
+}
+function rcRender(){
+  $('rcDot').className='dot '+(recMr?'on':'');
+  $('rcMeta').textContent=recMr?'идёт запись':'остановлена';
+  $('rcBtn').textContent=recMr?'Остановить':'Записать';
+}
+function rcToggle(){recMr?rcStop():rcStart();}
+function rcStart(){
+  if(recMr)return;
+  if(!scOn)return toast('Сначала запусти захват экрана');
+  if(!window.MediaRecorder)return toast('Запись не поддерживается');
+  const mime=rcMime();
+  const c=document.createElement('canvas');
+  c.width=scW||720;c.height=scH||1280;
+  const ctx=c.getContext('2d');
+  let cs;
+  try{cs=c.captureStream(Math.max(1,screen.fps||2));}catch(e){return toast('Нет захвата потока');}
+  try{recMr=new MediaRecorder(cs,mime?{mimeType:mime,videoBitsPerSecond:2500000}:undefined);}
+  catch(e){recMr=null;return toast('Ошибка записи: '+e.message);}
+  recChunks=[];
+  recMr.ondataavailable=e=>{if(e.data&&e.data.size)recChunks.push(e.data);};
+  recMr.onstop=()=>{
+    recBlob=new Blob(recChunks,{type:(recMr&&recMr.mimeType)||'video/webm'});
+    scLogAdd('🎬 запись готова: '+Math.round(recBlob.size/1024)+' КБ');
+    recMr=null;rcRender();
+  };
+  recMr.start(1000);
+  recT0=Date.now();
+  recTimer=setInterval(()=>{
+    if(!scLast)return;
+    const im=new Image();
+    im.onload=()=>{try{ctx.drawImage(im,0,0,c.width,c.height);}catch(e){}};
+    im.src=scLast;
+  },Math.round(1000/Math.max(1,screen.fps||2)));
+  recTick=setInterval(()=>{
+    const s=Math.floor((Date.now()-recT0)/1000);
+    $('rcTime').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },500);
+  rcRender();scLogAdd('🎬 запись начата');
+}
+function rcStop(){
+  if(!recMr)return;
+  try{recMr.stop();}catch(e){}
+  clearInterval(recTimer);recTimer=null;clearInterval(recTick);recTick=null;
+  $('rcTime').textContent='00:00';
+  scLogAdd('🎬 запись остановлена');
+}
+function rcSave(){
+  if(recMr)return toast('Сначала останови запись');
+  if(!recBlob)return toast('Нет видео');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(recBlob);
+  a.download='nexus-video-'+Date.now()+'.webm';
+  a.click();
+  scLogAdd('💾 видео сохранено');
+}
+
 /* ================= СТАРТ ================= */
 $('input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
 $('input').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px';});
