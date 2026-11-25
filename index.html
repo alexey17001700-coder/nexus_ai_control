@@ -704,7 +704,7 @@ let scTimer=null, scOn=false, scPaused=false, scLog=[], scLast='';
 const NS=()=>(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.NexusScreen)||null;
 
 function scSaveQ(){
-  screen.q=parseInt($('scQ').value,10)||720;
+  screen.q=parseInt($('scQ').value,10)||75;
   screen.fps=Math.max(1,Math.min(10,parseInt($('scFpsIn').value,10)||2));
   localStorage.setItem(LS_SC,JSON.stringify(screen));
   if(scOn&&!scPaused){scStopLoop();scStartLoop();}
