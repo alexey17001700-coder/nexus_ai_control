@@ -480,9 +480,9 @@ async function runCmd(k){
     }
     if(k==='call'){const n=prompt('Номер:');if(n)location.href='tel:'+n;return;}
     if(k==='cam'){const i=document.createElement('input');i.type='file';i.accept='image/*';i.capture='environment';i.click();return toast('Камера открыта');}
-    if(k==='volume')return toast('Громкость — нативный модуль, ЭТАП 3');
-    if(k==='torch')return toast('Фонарик — нативный модуль, ЭТАП 3');
-    if(k==='bridge')return toast('Мост к Штабу — ЭТАП 3');
+    if(k==='torch'){const on=!brTorch;return toast(await doTorch(on));}
+    if(k==='volume'){const lv=prompt('Громкость 0-100:','70');if(lv===null)return;return toast(await doVolume(parseInt(lv,10)));}
+    if(k==='bridge'){go('bridge');return;}
   }catch(e){toast('Ошибка: '+e.message);}
 }
 
