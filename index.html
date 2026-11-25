@@ -912,7 +912,7 @@ async function send(textArg){
     chats[activeId].push({role:'assistant',content:ans});
     if(voice.speak)doSpeak(ans);
     save();renderMsgs();
-    return;
+    return ans;
   }
 
   const box=$('msgs');
