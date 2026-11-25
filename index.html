@@ -371,6 +371,175 @@ details .body li{margin-bottom:4px}
       <div id="brLog" style="margin-top:10px"></div>
     </div>
   </section>
+
+  <!-- ГИД -->
+  <section class="view" id="view-guide">
+    <div class="note">Видео-инструкция: анимация сама показывает, что где лежит. Ниже — та же инструкция текстом.</div>
+
+    <div class="demo">
+      <div class="demo-phone">
+        <div class="demo-screen" id="demoScreen">
+
+          <div class="scene on" data-i="0">
+            <div class="an" style="animation-delay:.05s;display:grid;place-items:center;flex:1;gap:11px">
+              <div class="demo-icon">N</div>
+              <div class="demo-appname">Nexus AI Control</div>
+              <div class="demo-prog"><i></i></div>
+              <div class="demo-tiny">Установка…</div>
+            </div>
+          </div>
+
+          <div class="scene" data-i="1">
+            <div class="demo-hdr">🤖 ИИ</div>
+            <div class="demo-card an" style="animation-delay:.05s">
+              <div class="demo-line"><span class="dot on"></span><b>OpenAI</b></div>
+              <div class="demo-tiny">gpt-4o-mini · api.openai.com</div>
+            </div>
+            <div class="demo-card an" style="animation-delay:.25s">
+              <div class="demo-line"><span class="dot"></span><b>DeepSeek</b></div>
+              <div class="demo-tiny">deepseek-chat</div>
+            </div>
+            <div class="demo-btn an" style="animation-delay:.45s">+ Добавить ИИ</div>
+          </div>
+
+          <div class="scene" data-i="2">
+            <div class="demo-hdr">💬 Чат</div>
+            <div class="demo-chiprow an" style="animation-delay:.05s">
+              <span class="demo-chip on">OpenAI</span><span class="demo-chip">DeepSeek</span>
+            </div>
+            <div class="demo-bub u an" style="animation-delay:.25s">Привет! Кто ты?</div>
+            <div class="demo-bub a an" style="animation-delay:.5s">Я твой ИИ-хаб 🤖</div>
+          </div>
+
+          <div class="scene" data-i="3">
+            <div class="demo-hdr">📱 Телефон</div>
+            <div class="demo-grid an" style="animation-delay:.05s">
+              <div class="demo-tile on">🔦<span>Фонарик</span></div>
+              <div class="demo-tile">📳<span>Вибрация</span></div>
+              <div class="demo-tile">🔊<span>Громкость</span></div>
+              <div class="demo-tile">🔋<span>Батарея</span></div>
+            </div>
+            <div class="demo-tiny an" style="animation-delay:.4s">Фонарик и громкость — только в APK</div>
+          </div>
+
+          <div class="scene" data-i="4">
+            <div class="demo-hdr">🖥️ Экран <span class="demo-live">LIVE</span></div>
+            <div class="demo-view an" style="animation-delay:.05s"><div class="demo-ripple"></div></div>
+            <div class="demo-tiny an" style="animation-delay:.4s">Тап по картинке = нажатие на телефоне</div>
+          </div>
+
+          <div class="scene" data-i="5">
+            <div class="demo-hdr">🛰️ Мост</div>
+            <div class="demo-term an" style="animation-delay:.05s">
+              <div>▶ torch → 🔦 ВКЛ</div>
+              <div>▶ notify → ✔ показано</div>
+              <div>▶ screenshot → 📸 214 КБ</div>
+            </div>
+            <div class="demo-tiny an" style="animation-delay:.5s">Архитектор управляет телефоном удалённо</div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="demo-bar"><div class="demo-fill" id="demoFill"></div></div>
+      <div class="demo-t" id="demoT">1. Установка</div>
+      <div class="demo-d" id="demoD">Скачай APK и установи.</div>
+      <div class="demo-ctl">
+        <button class="btn ghost" onclick="demoPrev()">‹</button>
+        <button class="btn pri" style="flex:1" id="demoBtn" onclick="demoToggle()">Пауза</button>
+        <button class="btn ghost" onclick="demoNext()">›</button>
+      </div>
+      <div class="demo-dots" id="demoDots"></div>
+    </div>
+
+    <details open>
+      <summary>1. Установить приложение (APK)</summary>
+      <div class="body">
+        <ol>
+          <li>Открой репозиторий <b>nexus_ai_control</b> → вкладка <b>Actions</b>.</li>
+          <li>Выбери последнюю сборку <b>Build APK</b> → внизу блок <b>Artifacts</b> → скачай <b>nexus-ai-control-apk</b>.</li>
+          <li>Распакуй архив, скинь <b>app-debug.apk</b> на телефон.</li>
+          <li>Открой файл → разреши «Установка из неизвестных источников» → <b>Установить</b>.</li>
+        </ol>
+        <b>Без APK</b> тоже работает — открой сайт в Chrome → меню → «Установить приложение». Но фонарик, громкость, захват экрана и тапы будут недоступны: браузер их запрещает.
+      </div>
+    </details>
+
+    <details>
+      <summary>2. Добавить ИИ</summary>
+      <div class="body">
+        Вкладка <b>🤖 ИИ</b> → <b>+ Добавить ИИ</b>. Заполни:
+        <ol>
+          <li><b>Название</b> — как хочешь, например «Мой Штаб».</li>
+          <li><b>Base URL</b> — адрес без <code>/chat/completions</code>: <code>https://api.openai.com/v1</code>, <code>https://api.deepseek.com/v1</code>, <code>https://openrouter.ai/api/v1</code>.</li>
+          <li><b>Модель</b> — <code>gpt-4o-mini</code>, <code>deepseek-chat</code>, <code>llama-3.3-70b-versatile</code>.</li>
+          <li><b>API-ключ</b> — вставь свой. Хранится только в памяти телефона, в репозиторий не уходит.</li>
+        </ol>
+        Жми <b>Проверить</b> — если связь есть, покажет число моделей. Зелёная точка = ИИ отвечает, красная = ошибка (URL, ключ или CORS).
+      </div>
+    </details>
+
+    <details>
+      <summary>3. Общаться в чате</summary>
+      <div class="body">
+        Вкладка <b>💬 Чат</b>. Сверху чипсы — переключение между ИИ, у каждого своя история. Пиши в поле внизу, Enter — отправить, Shift+Enter — новая строка. Поддерживается markdown и блоки кода.
+      </div>
+    </details>
+
+    <details>
+      <summary>4. Управлять телефоном</summary>
+      <div class="body">
+        Вкладка <b>📱 Телефон</b>: фонарик, вибрация, громкость, статус сети, батарея, буфер обмена, звонок, карты, камера.
+        <br><b>Фонарик и громкость</b> работают только в APK — там их выполняет нативный модуль <b>NexusNative</b> через вспышку камеры и системный аудиопоток. В браузере кнопка честно скажет, что нужен APK.
+      </div>
+    </details>
+
+    <details>
+      <summary>5. Экран телефона и тап-управление</summary>
+      <div class="body">
+        Вкладка <b>🖥️ Экран</b>.
+        <ol>
+          <li>Нажми <b>Запустить</b> → в окне Android подтверди «Начать запись».</li>
+          <li>Картинка телефона появится в приложении. Настрой <b>качество JPEG</b> и <b>FPS</b> (1–10).</li>
+          <li><b>Пауза</b> — заморозить, <b>Кадр</b> — одиночный снимок, <b>Сохранить кадр</b> — в память телефона.</li>
+          <li>Для тапов: <b>Включить службу</b> → Настройки → Специальные возможности → <b>Nexus Control</b> → включить. Потом тапай по картинке — нажатие уйдёт в эту точку телефона. Есть свайпы и клавиши Назад / Домой / Недавние.</li>
+        </ol>
+        Root не нужен, но без службы доступности тапы Android не разрешит.
+      </div>
+    </details>
+
+    <details>
+      <summary>6. Трансляция на Штаб и запись видео</summary>
+      <div class="body">
+        <b>Трансляция:</b> вставь URL приёма (например <code>https://ntfy.sh/твой-топик</code>), задай интервал и жми <b>Начать трансляцию</b>. Кадры уходят POST-ом в JSON <code>{device, w, h, image, ts}</code> — я вижу твой экран со своей стороны.
+        <br><b>Запись видео:</b> кнопка <b>Записать</b> пишет кадры трансляции в WebM, таймер сверху. <b>Сохранить видео</b> — файл в память телефона. Держи захват экрана включённым.
+      </div>
+    </details>
+
+    <details>
+      <summary>7. Мост — я управляю твоим телефоном</summary>
+      <div class="body">
+        Вкладка <b>🛰️ Мост</b>. Я пишу команды в файл <code>bridge/commands.json</code>, приложение их забирает и выполняет.
+        <ol>
+          <li>Вставь <b>URL канала команд</b> (raw-ссылка на commands.json или свой сервер).</li>
+          <li>Хочешь отчёты — впиши <b>webhook</b>, туда полетит результат каждой команды.</li>
+          <li>Жми <b>Подключить</b> — опрос пойдёт по таймеру. <b>Забрать сейчас</b> — разовая проверка.</li>
+        </ol>
+        Команды: <code>torch</code>, <code>volume</code>, <code>toast</code>, <code>notify</code>, <code>vibrate</code>, <code>speak</code>, <code>open</code>, <code>clip</code>, <code>ask</code>, <code>status</code>, <code>screen</code>, <code>screenshot</code>, <code>stream</code>, <code>record</code>, <code>tap</code>, <code>swipe</code>, <code>key</code>.
+      </div>
+    </details>
+
+    <details>
+      <summary>8. Если что-то не работает</summary>
+      <div class="body">
+        <b>ИИ не отвечает</b> — проверь Base URL (без <code>/chat/completions</code>), ключ и что у провайдера открыт CORS.<br>
+        <b>Фонарик/громкость молчат</b> — ты в браузере, нужен APK.<br>
+        <b>Экран чёрный</b> — не подтвердил запись или приложение ушло в фон; запусти захват заново.<br>
+        <b>Тапы не работают</b> — служба «Nexus Control» выключена в специальных возможностях.<br>
+        <b>Мост не забирает команды</b> — проверь URL и что <code>seq</code> в файле больше, чем в приложении.
+      </div>
+    </details>
+  </section>
 </main>
 
 <div class="composer" id="composer" style="display:none">
