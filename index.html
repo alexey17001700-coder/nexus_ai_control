@@ -704,7 +704,17 @@ details .body li{margin-bottom:4px}
 
 <script>
 /* ================= ХРАНИЛИЩЕ ================= */
-const LS_P='nexus_providers_v1', LS_A='nexus_active_v1', LS_C='nexus_chats_v1';
+const LS_P='wlupidol_providers_v1', LS_A='wlupidol_active_v1', LS_C='wlupidol_chats_v1';
+/* миграция: переносим данные со старых ключей nexus_* на новые wlupidol_* — ничего не теряется */
+(function(){
+  var pairs=[['nexus_providers_v1',LS_P],['nexus_active_v1',LS_A],['nexus_chats_v1',LS_C],
+             ['nexus_home_addr','wlupidol_home_addr'],['nexus_bridge_v1','wlupidol_bridge_v1'],
+             ['nexus_screen_v1','wlupidol_screen_v1'],['nexus_stream_v1','wlupidol_stream_v1'],
+             ['nexus_voice_v1','wlupidol_voice_v1']];
+  for(var i=0;i<pairs.length;i++){
+    try{ var o=localStorage.getItem(pairs[i][0]); if(o!==null && localStorage.getItem(pairs[i][1])===null) localStorage.setItem(pairs[i][1],o); }catch(e){}
+  }
+})();
 let providers = JSON.parse(localStorage.getItem(LS_P)||'[]');
 let activeId  = localStorage.getItem(LS_A)||null;
 let chats     = JSON.parse(localStorage.getItem(LS_C)||'{}');
