@@ -612,6 +612,17 @@ async function brExec(c){
     else if(a==='clip'){await doClip(String(v||''));res='в буфере';}
     else if(a==='ask'){const t=await askAI(String(v||''));doSpeak(t);res='ответ: '+String(t).slice(0,90);}
     else if(a==='status'){res=await doStatus();}
+    else if(a==='screen'){
+      const on=(v==='on'||v===true||v===1||v==='1');
+      if(on){if(!scOn)await scStart();res=scOn?'экран транслируется':'не удалось';}
+      else{if(scOn)await scStop();res='захват остановлен';}
+    }
+    else if(a==='screenshot'){
+      if(!scOn)await scStart();
+      await scGrab();
+      if(scLast){brReport(c.id,'screenshot','data:image/jpeg;base64,'+scLast.slice(0,0)+'['+scLast.length+' байт]');res='кадр '+scLast.length+' байт';}
+      else res='кадр не получен';
+    }
     else res='неизвестная команда: '+a;
   }catch(e){res='ошибка: '+e.message;}
   brAdd('▶ '+a+' → '+res);
