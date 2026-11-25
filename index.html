@@ -161,8 +161,47 @@ textarea{resize:vertical;min-height:70px}
 
   <!-- ТЕЛЕФОН -->
   <section class="view" id="view-phone">
-    <div class="note">Панель управления телефоном. Команды выполняются локально на устройстве. Полный удалённый доступ (как TeamViewer) требует отдельного сервиса и разрешений Android — это ЭТАП 3.</div>
+    <div class="note">Панель управления телефоном. Фонарик и громкость работают в APK-версии через нативный модуль NexusNative.</div>
     <div id="cmdList"></div>
+  </section>
+
+  <!-- МОСТ -->
+  <section class="view" id="view-bridge">
+    <div class="note">Канал удалённых команд. Архитектор пишет команды в файл <b>bridge/commands.json</b> — приложение забирает их и выполняет на телефоне. Результат видно в журнале.</div>
+
+    <div class="card">
+      <div class="row">
+        <span class="dot" id="brDot"></span>
+        <div class="grow">
+          <div class="name">Канал команд</div>
+          <div class="meta" id="brMeta">не подключён</div>
+        </div>
+        <span class="badge" id="brSeq">seq 0</span>
+      </div>
+      <div class="row" style="margin-top:11px;gap:8px">
+        <button class="btn pri" style="flex:1" id="brBtn" onclick="bridgeToggle()">Подключить</button>
+        <button class="btn ghost" style="flex:1" onclick="bridgePull(true)">Забрать сейчас</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <label style="margin-top:0">URL канала команд</label>
+      <input id="brUrl" placeholder="https://raw.githubusercontent.com/.../bridge/commands.json"/>
+      <label>Webhook для отчётов (необязательно)</label>
+      <input id="brHook" placeholder="https://ntfy.sh/my-topic"/>
+      <label>Интервал опроса, сек</label>
+      <input id="brInt" type="number" min="5" value="15"/>
+      <button class="btn wide" style="margin-top:12px" onclick="brSave()">Сохранить настройки</button>
+      <div class="hint">Команды: torch, volume, toast, notify, vibrate, speak, open, clip, ask, status.</div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <div class="grow"><div class="name">Журнал</div></div>
+        <button class="btn ghost" onclick="brClear()">Очистить</button>
+      </div>
+      <div id="brLog" style="margin-top:10px"></div>
+    </div>
   </section>
 </main>
 
@@ -175,6 +214,7 @@ textarea{resize:vertical;min-height:70px}
   <div class="tab on" data-v="ai" onclick="go('ai')"><b>🤖</b>ИИ</div>
   <div class="tab" data-v="chat" onclick="go('chat')"><b>💬</b>Чат</div>
   <div class="tab" data-v="phone" onclick="go('phone')"><b>📱</b>Телефон</div>
+  <div class="tab" data-v="bridge" onclick="go('bridge')"><b>🛰️</b>Мост</div>
 </nav>
 
 <!-- Редактор ИИ -->
