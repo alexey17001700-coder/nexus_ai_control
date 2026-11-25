@@ -645,7 +645,8 @@ if(!providers.length){
 }
 if(!activeId&&providers[0])activeId=providers[0].id;
 if(CAP){$('hdrBadge').textContent='APK';$('hdrSub').textContent='ИИ-хаб телефона · native';}
-renderAI();renderChips();renderMsgs();
+renderAI();renderChips();renderMsgs();brRender();brPaint();
+if(bridge.on){clearInterval(brTimer);brTimer=setInterval(()=>bridgePull(false),bridge.interval*1000);bridgePull(false);}
 </script>
 </body>
 </html>
