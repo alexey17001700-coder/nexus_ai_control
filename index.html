@@ -209,6 +209,55 @@ textarea{resize:vertical;min-height:70px}
 
     <div class="card">
       <div class="row">
+        <span class="dot" id="ctDot"></span>
+        <div class="grow">
+          <div class="name">Управление экраном</div>
+          <div class="meta" id="ctMeta">служба выключена</div>
+        </div>
+        <span class="badge" id="ctBadge">—</span>
+      </div>
+      <div class="row" style="margin-top:11px;gap:8px">
+        <button class="btn ghost" style="flex:1" onclick="ctSettings()">Включить службу</button>
+        <button class="btn ghost" style="flex:1" onclick="ctCheck()">Проверить</button>
+      </div>
+      <div class="row" style="margin-top:8px;gap:8px">
+        <button class="btn ghost" style="flex:1" onclick="ctKey('back')">◀ Назад</button>
+        <button class="btn ghost" style="flex:1" onclick="ctKey('home')">⌂ Домой</button>
+        <button class="btn ghost" style="flex:1" onclick="ctKey('recents')">▢ Недавние</button>
+      </div>
+      <div class="hint">Тап по картинке ниже — нажатие в этой точке телефона. Нужна служба «Nexus Control»: Настройки → Специальные возможности.</div>
+    </div>
+
+    <div class="card">
+      <label style="margin-top:0">Трансляция на Штаб (URL приёма кадров)</label>
+      <input id="stUrl" placeholder="https://ntfy.sh/my-topic или свой сервер"/>
+      <label>Отправлять кадр каждые, сек</label>
+      <input id="stInt" type="number" min="2" value="5"/>
+      <div class="row" style="margin-top:12px;gap:8px">
+        <button class="btn pri" style="flex:1" id="stBtn" onclick="stToggle()">Начать трансляцию</button>
+        <button class="btn ghost" style="flex:1" onclick="stSave()">Сохранить</button>
+      </div>
+      <div class="hint" id="stInfo">Кадры уходят POST-ом в JSON: {device, w, h, image, ts}.</div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <span class="dot" id="rcDot"></span>
+        <div class="grow">
+          <div class="name">Запись видео</div>
+          <div class="meta" id="rcMeta">остановлена</div>
+        </div>
+        <span class="badge" id="rcTime">00:00</span>
+      </div>
+      <div class="row" style="margin-top:11px;gap:8px">
+        <button class="btn pri" style="flex:1" id="rcBtn" onclick="rcToggle()">Записать</button>
+        <button class="btn ghost" style="flex:1" onclick="rcSave()">Сохранить видео</button>
+      </div>
+      <div class="hint">Пишется из кадров трансляции в WebM. Держи захват экрана включённым.</div>
+    </div>
+
+    <div class="card">
+      <div class="row">
         <div class="grow"><div class="name">Журнал экрана</div></div>
         <button class="btn ghost" onclick="scLogClear()">Очистить</button>
       </div>
