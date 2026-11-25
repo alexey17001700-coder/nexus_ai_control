@@ -1,0 +1,13 @@
+{
+  "name": "Nexus AI Control",
+  "short_name": "Nexus AI",
+  "description": "Добавление ИИ-провайдеров, чат и управление телефоном",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0e14",
+  "theme_color": "#0a0e14",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
