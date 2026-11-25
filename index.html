@@ -486,6 +486,153 @@ async function runCmd(k){
   }catch(e){toast('Ошибка: '+e.message);}
 }
 
+/* ================= МОСТ К ШТАБУ (удалённые команды) ================= */
+const LS_B='nexus_bridge_v1';
+const BR_DEF='https://raw.githubusercontent.com/alexey17001700-coder/nexus_ai_control/main/bridge/commands.json';
+let bridge=JSON.parse(localStorage.getItem(LS_B)||'null')||{url:BR_DEF,hook:'',interval:15,seq:0,on:false};
+let brTimer=null, brLog=[], brTorch=false;
+const NN=()=>(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.NexusNative)||null;
+
+function brSave(){
+  bridge.url=$('brUrl').value.trim();
+  bridge.hook=$('brHook').value.trim();
+  bridge.interval=Math.max(5,parseInt($('brInt').value||'15',10)||15);
+  localStorage.setItem(LS_B,JSON.stringify(bridge));
+  toast('Настройки моста сохранены');
+  if(bridge.on)bridgeStart();
+}
+function brRender(){
+  $('brUrl').value=bridge.url||'';
+  $('brHook').value=bridge.hook||'';
+  $('brInt').value=bridge.interval||15;
+  $('brSeq').textContent='seq '+bridge.seq;
+  $('brDot').className='dot '+(bridge.on?'on':'');
+  $('brMeta').textContent=bridge.on?('опрос каждые '+bridge.interval+' с'):'не подключён';
+  $('brBtn').textContent=bridge.on?'Отключить':'Подключить';
+}
+function brClear(){brLog=[];brPaint();}
+function brPaint(){
+  const box=$('brLog');
+  if(!brLog.length){box.innerHTML='<div class="empty" style="padding:16px">Пока пусто</div>';return;}
+  box.innerHTML=brLog.slice(0,40).map(l=>'<div class="meta" style="padding:5px 0;border-bottom:1px solid var(--line);white-space:normal">'+esc(l)+'</div>').join('');
+}
+function brAdd(t){brLog.unshift(new Date().toLocaleTimeString()+' · '+t);brPaint();}
+function bridgeToggle(){bridge.on?bridgeStop():bridgeStart();}
+function bridgeStart(){
+  if(!bridge.url)return toast('Укажи URL канала');
+  bridge.on=true;localStorage.setItem(LS_B,JSON.stringify(bridge));brRender();
+  clearInterval(brTimer);brTimer=setInterval(()=>bridgePull(false),bridge.interval*1000);
+  bridgePull(false);toast('Мост включён');
+}
+function bridgeStop(){
+  bridge.on=false;clearInterval(brTimer);brTimer=null;
+  localStorage.setItem(LS_B,JSON.stringify(bridge));brRender();toast('Мост выключен');
+}
+async function bridgePull(manual){
+  if(!bridge.url)return;
+  try{
+    const r=await fetch(bridge.url+(bridge.url.includes('?')?'&':'?')+'t='+Date.now(),{cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    const seq=Number(d.seq||0);
+    if(seq<=bridge.seq){if(manual)toast('Новых команд нет');return;}
+    const list=Array.isArray(d.cmds)?d.cmds:[];
+    brAdd('📥 seq '+seq+' — команд: '+list.length);
+    for(const c of list){await brExec(c);}
+    bridge.seq=seq;localStorage.setItem(LS_B,JSON.stringify(bridge));brRender();
+  }catch(e){
+    if(manual)toast('Канал: '+e.message);
+    brAdd('⚠ '+e.message);
+  }
+}
+async function brExec(c){
+  const a=String(c.action||'').toLowerCase(), v=c.value;
+  let res='ok';
+  try{
+    if(a==='torch'){res=await doTorch(v==='on'||v===true||v===1||v==='1');}
+    else if(a==='volume'){res=await doVolume(parseInt(v,10));}
+    else if(a==='toast'){await doToast(String(v||''));res='показано';}
+    else if(a==='notify'){await doNotify(c.title||'Nexus',String(v||''));res='уведомление';}
+    else if(a==='vibrate'){await doVibrate();res='вибрация';}
+    else if(a==='speak'){doSpeak(String(v||''));res='озвучено';}
+    else if(a==='open'){window.open(String(v||''),'_blank');res='открыто';}
+    else if(a==='clip'){await doClip(String(v||''));res='в буфере';}
+    else if(a==='ask'){const t=await askAI(String(v||''));doSpeak(t);res='ответ: '+String(t).slice(0,90);}
+    else if(a==='status'){res=await doStatus();}
+    else res='неизвестная команда: '+a;
+  }catch(e){res='ошибка: '+e.message;}
+  brAdd('▶ '+a+' → '+res);
+  brReport(c.id,a,res);
+  return res;
+}
+async function doTorch(on){
+  const p=NN();
+  if(p){await p.torch({on:!!on});brTorch=!!on;return on?'🔦 фонарик ВКЛ':'🔦 фонарик ВЫКЛ';}
+  return 'нужен APK: в браузере нет доступа к вспышке';
+}
+async function doVolume(lv){
+  const p=NN();
+  if(p){const r=await p.volume({level:isNaN(lv)?60:lv});return '🔊 громкость '+r.level+'%';}
+  return 'нужен APK';
+}
+async function doToast(t){
+  const p=NN();
+  if(p){await p.toast({text:t});return;}
+  toast(t);
+}
+async function doNotify(title,body){
+  const p=NN();
+  if(p){await p.notify({title:title,body:body});return;}
+  try{
+    if(window.Notification){
+      if(Notification.permission!=='granted')await Notification.requestPermission();
+      new Notification(title,{body:body});return;
+    }
+  }catch(e){}
+  toast(title+': '+body);
+}
+async function doVibrate(){
+  const p=NN();
+  if(p&&PL.Haptics){await PL.Haptics.vibrate({duration:200});return;}
+  if(navigator.vibrate)navigator.vibrate([120,80,120]);
+}
+function doSpeak(t){
+  try{const u=new SpeechSynthesisUtterance(t);u.lang='ru-RU';u.rate=1.05;speechSynthesis.speak(u);}catch(e){}
+}
+async function doClip(t){
+  const p=NN();
+  if(p&&PL.Clipboard){await PL.Clipboard.write({string:t});return;}
+  await navigator.clipboard.writeText(t);
+}
+async function doStatus(){
+  const s=[];
+  try{const b=await navigator.getBattery?.();if(b)s.push('🔋'+Math.round(b.level*100)+'%'+(b.charging?'⚡':''));}catch(e){}
+  s.push(navigator.onLine?'онлайн':'офлайн');
+  if(navigator.connection?.effectiveType)s.push(navigator.connection.effectiveType);
+  return s.join(' ');
+}
+async function askAI(q){
+  const p=providers.find(x=>x.id===activeId);
+  if(!p)return 'нет активного ИИ';
+  try{
+    const msgs=[];
+    if(p.sys)msgs.push({role:'system',content:p.sys});
+    msgs.push({role:'user',content:q});
+    const r=await fetch(p.url+'/chat/completions',{method:'POST',
+      headers:Object.assign({'Content-Type':'application/json'},p.key?{Authorization:'Bearer '+p.key}:{}),
+      body:JSON.stringify({model:p.model||'gpt-4o-mini',messages:msgs,stream:false})});
+    const d=await r.json();
+    return d.choices?.[0]?.message?.content||'пусто';
+  }catch(e){return 'ошибка ИИ: '+e.message;}
+}
+function brReport(id,action,res){
+  if(!bridge.hook)return;
+  try{
+    fetch(bridge.hook,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({device:CAP?'android':'web',id:id,action:action,result:res,ts:Date.now()})}).catch(()=>{});
+  }catch(e){}
+}
+
 /* ================= СТАРТ ================= */
 $('input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
 $('input').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px';});
