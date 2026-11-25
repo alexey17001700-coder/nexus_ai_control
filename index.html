@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Nexus AI Control</title>
+<meta name="theme-color" content="#0b0f14"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="icon" href="icon.svg"/>
+<style>
+:root{
+  --bg:#0a0e14; --card:#141c27; --card2:#1a2431; --line:#243244;
+  --txt:#e8eff7; --dim:#8ba0b6; --acc:#38e1c8; --acc2:#7c6cff; --err:#ff6b6b; --ok:#4ade80;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:radial-gradient(900px 500px at 50% -15%,#16283a 0%,var(--bg) 65%);
+  color:var(--txt);font:15px/1.45 -apple-system,Roboto,"Segoe UI",sans-serif;
+  display:flex;flex-direction:column;height:100dvh;overflow:hidden;
+}
+header{
+  padding:12px 16px 10px;display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--line);background:rgba(10,14,20,.75);
+  backdrop-filter:blur(12px);flex:0 0 auto;
+}
+.logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--acc),var(--acc2));
+  display:grid;place-items:center;font-weight:800;color:#06121a;font-size:15px}
+h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.2px}
+.sub{font-size:11px;color:var(--dim);margin-top:1px}
+main{flex:1 1 auto;overflow-y:auto;padding:14px 14px 90px;-webkit-overflow-scrolling:touch}
+.view{display:none}
+.view.on{display:block}
+.tabs{
+  position:fixed;left:0;right:0;bottom:0;display:flex;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+  background:rgba(12,17,24,.92);backdrop-filter:blur(14px);border-top:1px solid var(--line);z-index:40;
+}
+.tab{
+  flex:1;padding:9px 4px;border-radius:12px;text-align:center;font-size:11px;color:var(--dim);
+  border:1px solid transparent;cursor:pointer;user-select:none;
+}
+.tab b{display:block;font-size:17px;line-height:1.2;font-weight:400}
+.tab.on{color:var(--txt);background:var(--card2);border-color:var(--line)}
+.card{
+  background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);
+  border-radius:16px;padding:13px 14px;margin-bottom:10px;
+}
+.card.tap{cursor:pointer}
+.card.tap:active{transform:scale(.99)}
+.row{display:flex;align-items:center;gap:10px}
+.grow{flex:1;min-width:0}
+.name{font-weight:650;font-size:15px}
+.meta{font-size:11.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dot{width:9px;height:9px;border-radius:50%;background:#3a4a5c;flex:0 0 auto}
+.dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.dot.off{background:var(--err)}
+.badge{font-size:10px;padding:2px 7px;border-radius:20px;background:#22303f;color:var(--dim);border:1px solid var(--line)}
+.badge.acc{background:rgba(56,225,200,.14);color:var(--acc);border-color:rgba(56,225,200,.35)}
+button{font-family:inherit}
+.btn{
+  border:1px solid var(--line);background:var(--card2);color:var(--txt);border-radius:12px;
+  padding:11px 14px;font-size:14px;font-weight:600;cursor:pointer;
+}
+.btn:active{transform:scale(.98)}
+.btn.pri{background:linear-gradient(135deg,var(--acc),#2bb9a6);color:#04140f;border-color:transparent}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--err);border-color:rgba(255,107,107,.4);background:rgba(255,107,107,.08)}
+.btn.wide{width:100%;display:block}
+.empty{text-align:center;color:var(--dim);padding:40px 18px;font-size:13.5px;line-height:1.6}
+label{display:block;font-size:11.5px;color:var(--dim);margin:12px 0 5px;text-transform:uppercase;letter-spacing:.5px}
+input,textarea,select{
+  width:100%;background:#0d141d;border:1px solid var(--line);color:var(--txt);
+  border-radius:11px;padding:11px 12px;font-size:14.5px;font-family:inherit;outline:none;
+}
+input:focus,textarea:focus{border-color:var(--acc)}
+textarea{resize:vertical;min-height:70px}
+.hint{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.5}
+.sheet{
+  position:fixed;inset:0;background:rgba(4,8,12,.72);backdrop-filter:blur(3px);
+  display:none;align-items:flex-end;z-index:60;
+}
+.sheet.on{display:flex}
+.sheet-in{
+  width:100%;max-height:92dvh;overflow-y:auto;background:var(--bg);
+  border-top:1px solid var(--line);border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));
+  animation:up .22s ease;
+}
+@keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.sheet-h h2{font-size:16px;margin:0}
+.x{background:none;border:none;color:var(--dim);font-size:24px;line-height:1;cursor:pointer;padding:0 4px}
+.chips{display:flex;gap:7px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto;padding:7px 13px;border-radius:20px;border:1px solid var(--line);
+  background:var(--card);font-size:12.5px;color:var(--dim);cursor:pointer;white-space:nowrap;
+}
+.chip.on{background:rgba(56,225,200,.14);color:var(--acc);border-color:rgba(56,225,200,.4)}
+.msgs{display:flex;flex-direction:column;gap:9px}
+.msg{max-width:88%;padding:10px 13px;border-radius:15px;font-size:14.5px;white-space:pre-wrap;word-wrap:break-word}
+.msg.u{align-self:flex-end;background:linear-gradient(135deg,#2b6cff,#5b4bff);color:#fff;border-bottom-right-radius:5px}
+.msg.a{align-self:flex-start;background:var(--card2);border:1px solid var(--line);border-bottom-left-radius:5px}
+.msg.s{align-self:center;background:none;color:var(--dim);font-size:12px;padding:4px}
+.msg code{background:#0a1017;border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:13px}
+.msg pre{background:#0a1017;border:1px solid var(--line);border-radius:10px;padding:10px;overflow-x:auto;font-size:12.5px;margin:6px 0}
+.composer{
+  position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom));
+  display:flex;gap:8px;padding:9px 12px;background:rgba(12,17,24,.95);
+  backdrop-filter:blur(14px);border-top:1px solid var(--line);z-index:35;
+}
+.composer textarea{min-height:42px;max-height:120px;border-radius:20px;padding:11px 14px}
+.send{width:46px;height:46px;flex:0 0 auto;border-radius:50%;border:none;
+  background:linear-gradient(135deg,var(--acc),#2bb9a6);color:#04140f;font-size:19px;font-weight:700;cursor:pointer}
+.send:disabled{opacity:.4}
+.cmd{display:flex;align-items:center;gap:11px;padding:12px 13px;border:1px solid var(--line);
+  border-radius:14px;background:var(--card);margin-bottom:8px;cursor:pointer}
+.cmd:active{background:var(--card2)}
+.cmd .ic{width:34px;height:34px;border-radius:10px;background:var(--card2);display:grid;place-items:center;font-size:17px;flex:0 0 auto}
+.cmd .t{font-size:14px;font-weight:600}
+.cmd .d{font-size:11px;color:var(--dim)}
+.note{font-size:12px;color:var(--dim);background:rgba(124,108,255,.09);border:1px solid rgba(124,108,255,.28);
+  border-radius:12px;padding:10px 12px;line-height:1.55;margin-bottom:12px}
+.toast{
+  position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
+  background:#1d2836;border:1px solid var(--line);color:var(--txt);padding:10px 16px;border-radius:12px;
+  font-size:13px;opacity:0;transition:.25s;z-index:99;pointer-events:none;max-width:88vw;text-align:center;
+}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.25);
+  border-top-color:var(--acc);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">N</div>
+  <div class="grow">
+    <h1>Nexus AI Control</h1>
+    <div class="sub" id="hdrSub">ИИ-хаб телефона</div>
+  </div>
+  <span class="badge" id="hdrBadge">v1.0</span>
+</header>
+
+<main>
+  <!-- ИИ -->
+  <section class="view on" id="view-ai">
+    <div class="note">Добавляй любые ИИ с OpenAI-совместимым API: OpenAI, OpenRouter, DeepSeek, Groq, GigaChat-прокси, свой сервер. Ключи хранятся только в памяти телефона.</div>
+    <div id="aiList"></div>
+    <button class="btn pri wide" onclick="openEditor()">+ Добавить ИИ</button>
+  </section>
+
+  <!-- ЧАТ -->
+  <section class="view" id="view-chat">
+    <div class="chips" id="chatChips"></div>
+    <div class="msgs" id="msgs"></div>
+  </section>
+
+  <!-- ТЕЛЕФОН -->
+  <section class="view" id="view-phone">
+    <div class="note">Панель управления телефоном. Команды выполняются локально на устройстве. Полный удалённый доступ (как TeamViewer) требует отдельного сервиса и разрешений Android — это ЭТАП 3.</div>
+    <div id="cmdList"></div>
+  </section>
+</main>
+
+<div class="composer" id="composer" style="display:none">
+  <textarea id="input" rows="1" placeholder="Сообщение..."></textarea>
+  <button class="send" id="sendBtn" onclick="send()">➤</button>
+</div>
+
+<nav class="tabs">
+  <div class="tab on" data-v="ai" onclick="go('ai')"><b>🤖</b>ИИ</div>
+  <div class="tab" data-v="chat" onclick="go('chat')"><b>💬</b>Чат</div>
+  <div class="tab" data-v="phone" onclick="go('phone')"><b>📱</b>Телефон</div>
+</nav>
+
+<!-- Редактор ИИ -->
+<div class="sheet" id="sheet">
+  <div class="sheet-in">
+    <div class="sheet-h">
+      <h2 id="edTitle">Новый ИИ</h2>
+      <button class="x" onclick="closeEditor()">×</button>
+    </div>
+    <label>Название</label>
+    <input id="fName" placeholder="Например: GigaChat / Мой Штаб"/>
+    <label>Base URL (без /chat/completions)</label>
+    <input id="fUrl" placeholder="https://api.openai.com/v1"/>
+    <label>Модель</label>
+    <input id="fModel" placeholder="gpt-4o-mini"/>
+    <label>API-ключ</label>
+    <input id="fKey" type="password" placeholder="sk-..."/>
+    <div class="hint">Ключ не уходит никуда, кроме самого ИИ. В репозиторий не пишется.</div>
+    <label>Системный промпт</label>
+    <textarea id="fSys" placeholder="Ты полезный ассистент..."></textarea>
+    <div class="row" style="margin-top:14px;gap:8px">
+      <button class="btn ghost" style="flex:1" onclick="testConn()">Проверить</button>
+      <button class="btn pri" style="flex:1.4" onclick="saveProvider()">Сохранить</button>
+    </div>
+    <button class="btn danger wide" id="delBtn" style="margin-top:9px;display:none" onclick="delProvider()">Удалить</button>
+    <div class="hint" id="testOut" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= ХРАНИЛИЩЕ ================= */
+const LS_P='nexus_providers_v1', LS_A='nexus_active_v1', LS_C='nexus_chats_v1';
+let providers = JSON.parse(localStorage.getItem(LS_P)||'[]');
+let activeId  = localStorage.getItem(LS_A)||null;
+let chats     = JSON.parse(localStorage.getItem(LS_C)||'{}');
+let editingId = null;
+
+const save=()=>{localStorage.setItem(LS_P,JSON.stringify(providers));localStorage.setItem(LS_C,JSON.stringify(chats));};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function toast(t){const el=$('toast');el.textContent=t;el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),2200);}
+
+/* ================= ПРЕСЕТЫ ================= */
+const PRESETS=[
+  {name:'OpenAI',      url:'https://api.openai.com/v1',            model:'gpt-4o-mini'},
+  {name:'OpenRouter',  url:'https://openrouter.ai/api/v1',         model:'openai/gpt-4o-mini'},
+  {name:'DeepSeek',    url:'https://api.deepseek.com/v1',          model:'deepseek-chat'},
+  {name:'Groq',        url:'https://api.groq.com/openai/v1',       model:'llama-3.3-70b-versatile'},
+  {name:'Штаб (локально)', url:'http://127.0.0.1:8001/v1',         model:'zveno'},
+  {name:'Свой сервер', url:'',                                     model:''}
+];
+
+/* ================= НАВИГАЦИЯ ================= */
+function go(v){
+  document.querySelectorAll('.view').forEach(e=>e.classList.remove('on'));
+  $('view-'+v).classList.add('on');
+  document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.dataset.v===v));
+  $('composer').style.display = (v==='chat')?'flex':'none';
+  if(v==='chat'){renderChips();renderMsgs();setTimeout(()=>$('input').focus(),120);}
+  if(v==='ai')renderAI();
+  if(v==='phone')renderCmds();
+}
+
+/* ================= СПИСОК ИИ ================= */
+function renderAI(){
+  const box=$('aiList');
+  if(!providers.length){
+    box.innerHTML='<div class="empty">Пока ни одного ИИ.<br>Нажми «Добавить ИИ» и вставь ключ.</div>';
+    return;
+  }
+  box.innerHTML=providers.map(p=>{
+    const st=p._ok===true?'on':(p._ok===false?'off':'');
+    return `<div class="card tap" onclick="openEditor('${p.id}')">
+      <div class="row">
+        <span class="dot ${st}"></span>
+        <div class="grow">
+          <div class="name">${esc(p.name)}</div>
+          <div class="meta">${esc(p.model||'—')} · ${esc((p.url||'').replace(/^https?:\/\//,'').slice(0,32)||'нет URL')}</div>
+        </div>
+        ${p.id===activeId?'<span class="badge acc">активен</span>':''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ================= РЕДАКТОР ================= */
+function openEditor(id){
+  editingId=id||null;
+  const p=id?providers.find(x=>x.id===id):null;
+  $('edTitle').textContent=p?'Настройки ИИ':'Новый ИИ';
+  $('fName').value=p?p.name:'';
+  $('fUrl').value=p?p.url:'';
+  $('fModel').value=p?p.model:'';
+  $('fKey').value=p?p.key:'';
+  $('fSys').value=p?(p.sys||''):'';
+  $('delBtn').style.display=p?'block':'none';
+  $('testOut').textContent='';
+  $('sheet').classList.add('on');
+}
+function closeEditor(){$('sheet').classList.remove('on');editingId=null;}
+
+function saveProvider(){
+  const name=$('fName').value.trim(), url=$('fUrl').value.trim().replace(/\/+$/,'');
+  const model=$('fModel').value.trim(), key=$('fKey').value.trim(), sys=$('fSys').value.trim();
+  if(!name) return toast('Введи название');
+  if(!url)  return toast('Введи Base URL');
+  if(editingId){
+    const p=providers.find(x=>x.id===editingId);
+    Object.assign(p,{name,url,model,key,sys});
+  }else{
+    const p={id:uid(),name,url,model,key,sys,_ok:null};
+    providers.push(p);
+    if(!activeId)activeId=p.id;
+  }
+  save();renderAI();renderChips();closeEditor();toast('Сохранено');
+}
+function delProvider(){
+  if(!editingId)return;
+  providers=providers.filter(x=>x.id!==editingId);
+  delete chats[editingId];
+  if(activeId===editingId)activeId=providers[0]?providers[0].id:null;
+  save();renderAI();renderChips();renderMsgs();closeEditor();toast('Удалено');
+}
+async function testConn(){
+  const url=$('fUrl').value.trim().replace(/\/+$/,''), key=$('fKey').value.trim();
+  if(!url)return toast('Нет Base URL');
+  $('testOut').innerHTML='<span class="spin"></span> Проверяю...';
+  try{
+    const r=await fetch(url+'/models',{headers:key?{Authorization:'Bearer '+key}:{}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    const n=(d.data||d.models||[]).length;
+    $('testOut').innerHTML='<span style="color:var(--ok)">✔ Связь есть. Моделей: '+n+'</span>';
+    const p=editingId?providers.find(x=>x.id===editingId):null; if(p){p._ok=true;save();}
+  }catch(e){
+    $('testOut').innerHTML='<span style="color:var(--err)">✖ '+esc(e.message)+'</span><br>Проверь URL, ключ и CORS.';
+    const p=editingId?providers.find(x=>x.id===editingId):null; if(p){p._ok=false;save();}
+  }
+}
+
+/* ================= ЧАТ ================= */
+function renderChips(){
+  const c=$('chatChips');
+  if(!providers.length){c.innerHTML='<span class="chip">Сначала добавь ИИ</span>';return;}
+  c.innerHTML=providers.map(p=>`<span class="chip ${p.id===activeId?'on':''}" onclick="setActive('${p.id}')">${esc(p.name)}</span>`).join('');
+}
+function setActive(id){activeId=id;localStorage.setItem(LS_A,id);renderChips();renderMsgs();renderAI();}
+
+function md(t){
+  let s=esc(t);
+  s=s.replace(/```([\s\S]*?)```/g,(m,c)=>'<pre>'+c.replace(/^\n/,'')+'</pre>');
+  s=s.replace(/`([^`\n]+)`/g,'<code>$1</code>');
+  s=s.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+  return s;
+}
+function renderMsgs(){
+  const box=$('msgs'), list=chats[activeId]||[];
+  if(!activeId){box.innerHTML='<div class="empty">Выбери ИИ на вкладке «ИИ»</div>';return;}
+  if(!list.length){box.innerHTML='<div class="empty">Пустой диалог.<br>Напиши первое сообщение.</div>';return;}
+  box.innerHTML=list.map(m=>`<div class="msg ${m.role==='user'?'u':'a'}">${md(m.content)}</div>`).join('');
+  const m=document.querySelector('main');m.scrollTop=m.scrollHeight;
+}
+
+async function send(){
+  const inp=$('input'), text=inp.value.trim();
+  if(!text)return;
+  const p=providers.find(x=>x.id===activeId);
+  if(!p)return toast('Выбери ИИ');
+  inp.value='';
+  chats[activeId]=chats[activeId]||[];
+  chats[activeId].push({role:'user',content:text});
+  save();renderMsgs();
+
+  const box=$('msgs');
+  const wait=document.createElement('div');
+  wait.className='msg s';wait.innerHTML='<span class="spin"></span> '+esc(p.name)+' думает...';
+  box.appendChild(wait);document.querySelector('main').scrollTop=1e9;
+  $('sendBtn').disabled=true;
+
+  const msgs=[];
+  if(p.sys)msgs.push({role:'system',content:p.sys});
+  chats[activeId].slice(-20).forEach(m=>msgs.push({role:m.role,content:m.content}));
+
+  try{
+    const r=await fetch(p.url+'/chat/completions',{
+      method:'POST',
+      headers:Object.assign({'Content-Type':'application/json'}, p.key?{Authorization:'Bearer '+p.key}:{}),
+      body:JSON.stringify({model:p.model||'gpt-4o-mini',messages:msgs,stream:false})
+    });
+    if(!r.ok){throw new Error('HTTP '+r.status+' '+(await r.text()).slice(0,160));}
+    const d=await r.json();
+    const ans=d.choices?.[0]?.message?.content || d.message?.content || '(пустой ответ)';
+    chats[activeId].push({role:'assistant',content:ans});
+    p._ok=true;
+  }catch(e){
+    chats[activeId].push({role:'assistant',content:'⚠ Ошибка: '+e.message});
+    p._ok=false;
+  }
+  save();renderMsgs();renderAI();
+  $('sendBtn').disabled=false;
+}
+
+/* ================= КОМАНДЫ ТЕЛЕФОНА ================= */
+const CMDS=[
+  {ic:'🔦',t:'Фонарик',d:'Вкл/выкл вспышку',k:'torch'},
+  {ic:'📳',t:'Вибрация',d:'Короткий сигнал',k:'vibrate'},
+  {ic:'🔊',t:'Громкость',d:'Медиа на максимум',k:'volume'},
+  {ic:'📶',t:'Статус сети',d:'Тип соединения',k:'net'},
+  {ic:'🔋',t:'Батарея',d:'Уровень заряда',k:'batt'},
+  {ic:'📋',t:'Буфер обмена',d:'Прочитать текст',k:'clip'},
+  {ic:'📞',t:'Позвонить',d:'Набрать номер',k:'call'},
+  {ic:'🗺️',t:'Открыть карты',d:'Текущие координаты',k:'geo'},
+  {ic:'📸',t:'Камера',d:'Сделать снимок',k:'cam'},
+  {ic:'🛰️',t:'Мост к Штабу',d:'ЭТАП 3 — удалённые команды',k:'bridge'}
+];
+function renderCmds(){
+  $('cmdList').innerHTML=CMDS.map(c=>`<div class="cmd" onclick="runCmd('${c.k}')">
+    <div class="ic">${c.ic}</div><div class="grow"><div class="t">${c.t}</div><div class="d">${c.d}</div></div>
+    <span style="color:var(--dim)">›</span></div>`).join('');
+}
+async function runCmd(k){
+  try{
+    if(k==='vibrate'){navigator.vibrate&&navigator.vibrate([80,60,80]);return toast('Вибрация');}
+    if(k==='batt'){
+      const b=await navigator.getBattery?.();
+      return toast(b?('Батарея: '+Math.round(b.level*100)+'%'+(b.charging?' ⚡':'')):'Недоступно');
+    }
+    if(k==='net')return toast('Сеть: '+(navigator.connection?.effectiveType||'—')+' / '+(navigator.onLine?'онлайн':'офлайн'));
+    if(k==='clip'){const t=await navigator.clipboard.readText();return toast(t?('📋 '+t.slice(0,60)):'Буфер пуст');}
+    if(k==='geo'){
+      navigator.geolocation.getCurrentPosition(p=>{
+        const {latitude:la,longitude:lo}=p.coords;
+        window.open('https://maps.google.com/?q='+la+','+lo,'_blank');
+      },()=>toast('Нет доступа к геолокации'));
+      return;
+    }
+    if(k==='call'){const n=prompt('Номер:');if(n)location.href='tel:'+n;return;}
+    if(k==='cam'){const i=document.createElement('input');i.type='file';i.accept='image/*';i.capture='environment';i.click();return toast('Камера открыта');}
+    if(k==='volume')return toast('Громкость — только в APK-версии (ЭТАП 2)');
+    if(k==='torch')return toast('Фонарик — только в APK-версии (ЭТАП 2)');
+    if(k==='bridge')return toast('Мост к Штабу — ЭТАП 3');
+  }catch(e){toast('Ошибка: '+e.message);}
+}
+
+/* ================= СТАРТ ================= */
+$('input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
+$('input').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px';});
+$('sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeEditor();});
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>go(t.dataset.v)));
+
+if(!providers.length){
+  providers=PRESETS.slice(0,4).map(p=>({id:uid(),name:p.name,url:p.url,model:p.model,key:'',sys:'',_ok:null}));
+  activeId=providers[0].id;save();
+}
+if(!activeId&&providers[0])activeId=providers[0].id;
+renderAI();renderChips();renderMsgs();
+</script>
+</body>
+</html>
