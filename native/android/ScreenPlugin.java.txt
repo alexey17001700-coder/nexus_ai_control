@@ -1,0 +1,85 @@
+package com.nexus.aicontrol;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.media.projection.MediaProjectionManager;
+import android.os.Build;
+import android.util.Base64;
+
+import androidx.activity.result.ActivityResult;
+
+import com.getcapacitor.JSObject;
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.ActivityCallback;
+import com.getcapacitor.annotation.CapacitorPlugin;
+
+/**
+ * Плагин трансляции экрана.
+ * Доступен из JS как Capacitor.Plugins.NexusScreen
+ *   request()  — запросить разрешение и запустить службу
+ *   capture()  — вернуть текущий кадр (data:image/jpeg;base64)
+ *   stop()     — остановить трансляцию
+ *   running()  — идёт ли трансляция
+ */
+@CapacitorPlugin(name = "NexusScreen")
+public class ScreenPlugin extends Plugin {
+
+    @PluginMethod
+    public void request(PluginCall call) {
+        MediaProjectionManager mpm = (MediaProjectionManager) getContext().getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+        Intent intent = mpm.createScreenCaptureIntent();
+        startActivityForResult(call, intent, "permResult");
+    }
+
+    @ActivityCallback
+    private void permResult(PluginCall call, ActivityResult result) {
+        if (call == null) return;
+        if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+            Intent svc = new Intent(getContext(), ScreenCaptureService.class);
+            svc.putExtra("resultCode", result.getResultCode());
+            svc.putExtra("data", result.getData());
+            if (Build.VERSION.SDK_INT >= 26) getContext().startForegroundService(svc);
+            else getContext().startService(svc);
+            JSObject r = new JSObject();
+            r.put("granted", true);
+            call.resolve(r);
+        } else {
+            JSObject r = new JSObject();
+            r.put("granted", false);
+            call.resolve(r);
+        }
+    }
+
+    @PluginMethod
+    public void capture(PluginCall call) {
+        int q = call.getInt("quality", 70);
+        ScreenCaptureService svc = ScreenCaptureService.instance;
+        if (svc == null) { call.reject("Служба не запущена"); return; }
+        byte[] jpg = svc.captureJpeg(Math.max(10, Math.min(100, q)));
+        if (jpg == null) { call.reject("Кадр ещё не готов"); return; }
+        JSObject r = new JSObject();
+        r.put("image", "data:image/jpeg;base64," + Base64.encodeToString(jpg, Base64.NO_WRAP));
+        r.put("w", svc.getWidth());
+        r.put("h", svc.getHeight());
+        call.resolve(r);
+    }
+
+    @PluginMethod
+    public void stop(PluginCall call) {
+        ScreenCaptureService svc = ScreenCaptureService.instance;
+        if (svc != null) svc.stopCapture();
+        try { getContext().stopService(new Intent(getContext(), ScreenCaptureService.class)); } catch (Exception e) {}
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void running(PluginCall call) {
+        ScreenCaptureService svc = ScreenCaptureService.instance;
+        JSObject r = new JSObject();
+        r.put("running", svc != null && svc.getStamp() > 0);
+        call.resolve(r);
+    }
+}
