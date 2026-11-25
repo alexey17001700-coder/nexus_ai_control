@@ -1033,6 +1033,11 @@ async function brExec(c){
       await ctSwipe(n[0],n[1],n[2],n[3],n[4]);res='свайп';
     }
     else if(a==='key'){await ctKey(String(v||'back'));res='клавиша '+v;}
+    else if(a==='listen'){
+      const on=(v==='on'||v===true||v===1||v==='1');
+      if(on){if(!vOn)await vStart(false);res=vOn?'микрофон слушает':'микрофон недоступен';}
+      else{if(vOn)await vStop();res='микрофон выключен';}
+    }
     else if(a==='stream'){
       const on=(v==='on'||v===true||v===1||v==='1');
       on?stStart():stStop();
