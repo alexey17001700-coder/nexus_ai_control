@@ -1,0 +1,67 @@
+package com.nexus.aicontrol;
+
+import android.accessibilityservice.AccessibilityService;
+import android.accessibilityservice.GestureDescription;
+import android.content.Intent;
+import android.graphics.Path;
+import android.os.Build;
+import android.view.accessibility.AccessibilityEvent;
+
+/**
+ * Служба специальных возможностей Nexus Control.
+ * Даёт приложению право нажимать, свайпать и жать системные клавиши
+ * от имени пользователя (без root).
+ */
+public class NexusAccessibilityService extends AccessibilityService {
+
+    public static NexusAccessibilityService instance = null;
+
+    @Override
+    protected void onServiceConnected() {
+        super.onServiceConnected();
+        instance = this;
+    }
+
+    @Override
+    public void onAccessibilityEvent(AccessibilityEvent event) { }
+
+    @Override
+    public void onInterrupt() { }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        instance = null;
+        return super.onUnbind(intent);
+    }
+
+    public boolean tap(float x, float y) {
+        if (Build.VERSION.SDK_INT < 24) return false;
+        Path p = new Path();
+        p.moveTo(x, y);
+        GestureDescription.StrokeDescription s =
+                new GestureDescription.StrokeDescription(p, 0, 60);
+        GestureDescription g = new GestureDescription.Builder().addStroke(s).build();
+        return dispatchGesture(g, null, null);
+    }
+
+    public boolean swipe(float x1, float y1, float x2, float y2, int ms) {
+        if (Build.VERSION.SDK_INT < 24) return false;
+        Path p = new Path();
+        p.moveTo(x1, y1);
+        p.lineTo(x2, y2);
+        GestureDescription.StrokeDescription s =
+                new GestureDescription.StrokeDescription(p, 0, Math.max(60, ms));
+        GestureDescription g = new GestureDescription.Builder().addStroke(s).build();
+        return dispatchGesture(g, null, null);
+    }
+
+    public boolean key(int code) {
+        switch (code) {
+            case 4:   return performGlobalAction(GLOBAL_ACTION_BACK);
+            case 3:   return performGlobalAction(GLOBAL_ACTION_HOME);
+            case 187: return performGlobalAction(GLOBAL_ACTION_RECENTS);
+            case 84:  return performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS);
+        }
+        return false;
+    }
+}
